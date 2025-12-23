@@ -7,16 +7,9 @@ import { mkdir } from 'fs/promises'
 const sharedConfig: Options = {
   platform: 'node',
   entry: ['src/loggings.ts'],
-  bundle: true,
-  minify: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
-  minifyWhitespace: true,
-  skipNodeModulesBundle: true,
-  clean: true,
-  dts: false
 }
 
+// Node.js CJS Build
 await build({
   format: 'cjs',
   outDir: 'cjs',
@@ -26,6 +19,7 @@ await build({
   ...sharedConfig
 })
 
+// Node.js ESM Build
 await build({
   format: 'esm',
   outDir: 'mjs',
@@ -35,15 +29,24 @@ await build({
   ...sharedConfig
 })
 
+// Browser ESM Build
 await build({
   format: 'esm',
-  outDir: 'cdn',
+  outDir: 'browser',
   tsconfig: './tsconfig.mjs.json',
-  splitting: true,
+  splitting: false,
   cjsInterop: false,
   ...sharedConfig,
+  bundle: true,
+  minify: true,
+  minifyIdentifiers: true,
+  minifySyntax: true,
+  minifyWhitespace: true,
+  skipNodeModulesBundle: true,
+  clean: true,
+  dts: false,
   target:["es2024"],
-  entry:['src/cdn.ts'],
+  entry:['src/browser.ts'],
   noExternal: ['node:util'],
   esbuildPlugins: [
     {
@@ -65,10 +68,12 @@ await build({
 
 await writeFile('cjs/package.json', JSON.stringify({ type: 'commonjs' }, null, 2))
 await writeFile('mjs/package.json', JSON.stringify({ type: 'module' }, null, 2))
+await writeFile('browser/package.json', JSON.stringify({ type: 'module' }, null, 2))
 
+// Generate Main DTS
 const dtsPath = join(process.cwd(), 'loggings.d.ts')
 let dtsCode = generateDtsBundle([{
-  filePath: join(process.cwd(), 'src/index.ts'),
+  filePath: join(process.cwd(), 'src/loggings.ts'),
   output: {
     sortNodes: true,
     exportReferencedTypes: true,
@@ -80,3 +85,17 @@ let dtsCode = generateDtsBundle([{
 await mkdir(dirname(dtsPath), { recursive: true });
 dtsCode = `import { Console } from "console"\n` + dtsCode
 await writeFile(dtsPath, dtsCode, { encoding: 'utf-8' })
+
+// Generate Browser DTS
+const browserDtsPath = join(process.cwd(), 'browser.d.ts')
+let browserDtsCode = generateDtsBundle([{
+  filePath: join(process.cwd(), 'src/browser.ts'),
+  output: {
+    sortNodes: true,
+    exportReferencedTypes: true,
+    inlineDeclareExternals: true,
+    inlineDeclareGlobals: true
+  }
+}]).join("\n")
+
+await writeFile(browserDtsPath, browserDtsCode, { encoding: 'utf-8' })

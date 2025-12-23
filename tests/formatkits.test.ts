@@ -67,8 +67,8 @@ describe("Loggings FormatKits", () => {
                 return `User: ${match}`;
             });
             
-            const result = LoggingsFormatKitController("@Drylian@", [customParser]);
-            expect(result).toBe("User: Drylian");
+            const result = LoggingsFormatKitController("@drysius@", [customParser]);
+            expect(result).toBe("User: drysius");
         });
         
         it("should strip colors when nocolor is true", () => {

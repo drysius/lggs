@@ -2,7 +2,11 @@
 node_modules
 cjs
 esm
+mjs
+docs
+browser
 loggings.d.ts
+browser.d.ts
 # output
 out
 dist

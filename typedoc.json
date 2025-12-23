@@ -1,0 +1,8 @@
+{
+    "entryPoints": ["./src/loggings.ts"],
+    "out": "./docs",
+    "theme": "typedoc-rhineai-theme",
+    "plugin": ["typedoc-rhineai-theme"],
+    "name": "Loggings Documentation",
+    "readme": "./README.md"
+}

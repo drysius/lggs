@@ -13,7 +13,7 @@ npm install loggings
 ### Deno Support
 
 ```typescript
-import { Loggings } from "https://github.com/drylian/Loggings/blob/main/src/mod.ts";
+import { Loggings } from "https://github.com/drysius/Loggings/blob/main/src/mod.ts";
 const logger = new Loggings("Deno");
 logger.log("Hello [World].blue-b")
 ```
@@ -129,11 +129,11 @@ logger.debug("This is an debug message");
 
 ### License
 
-This project is licensed under the Apache-2.0 License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT lincense.
 
 ### Contributing
 
-Contributions are welcome! If you find any bugs or have suggestions for improvements, please open an issue on the [GitHub repository](https://github.com/drylian/loggings).
+Contributions are welcome! If you find any bugs or have suggestions for improvements, please open an issue on the [GitHub repository](https://github.com/drysius/loggings).
 
 ### Support
 

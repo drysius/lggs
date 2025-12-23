@@ -1,5 +1,5 @@
 /**
- * Export various modules and types required for the logging system.
+ * Export various modules and types required for the logging system (Browser Version).
  */
 
 export * from "./libs/defaults";
@@ -7,15 +7,12 @@ export * from "./libs/formatkits";
 export * from "./libs/inspect";
 export * from "./libs/pallet";
 export * from "./libs/plugins/console";
-export * from "./libs/plugins/register";
 export * from "./libs/utils";
 export * from "./types";
 
-import { Console } from "node:console";
 import defaults, { type LoggingsBaseConfig } from "./libs/defaults";
 import type { LoggingsPallet } from "./libs/pallet";
 import { ConsolePlugin } from "./libs/plugins/console";
-import { RegisterPlugin } from "./libs/plugins/register";
 import { deepMerge } from "./libs/utils";
 import type {
 	LoggingsLevel,
@@ -44,22 +41,16 @@ export type LoggingsInitOptions<
 };
 
 /**
- * Default plugins used in the logging system if none are specified.
+ * Default plugins used in the browser logging system.
+ * Only ConsolePlugin is included by default for browser environments.
  */
-export const LoggingsDefaultPlugins = [ConsolePlugin, RegisterPlugin] as const;
-
-declare const global: typeof globalThis & {
-	/**
-	 * Internal global storage for the loggings instance when overriding the global console.
-	 */
-	__INTERNAL_LOGGINGS_INSTANCE__: InstanceType<typeof Loggings>;
-};
+export const LoggingsDefaultPlugins = [ConsolePlugin] as const;
 
 /**
- * Loggings Class
+ * Loggings Class (Browser Version)
  *
- * A high-performance, structured logging system that extends the native Console.
- * Supports a flexible plugin system, gradients, custom formatting kits, and deep configuration merging.
+ * A lightweight version of Loggings optimized for browser environments.
+ * It does not extend the native Console and removes Node.js specific features like file registration.
  *
  * @template Config - The configuration object type for this instance.
  * @template Ps - The tuple of plugins used by this instance.
@@ -68,7 +59,7 @@ export class Loggings<
 	const in out Config extends LoggingsBaseConfig = typeof defaults,
 	const in out Ps extends
 		readonly LoggingsPlugin<any>[] = typeof LoggingsDefaultPlugins,
-> extends Console {
+> {
 	/**
 	 * Global logging configuration.
 	 * Changes here affect all instances that do not override specific properties.
@@ -148,7 +139,6 @@ export class Loggings<
 		color: keyof typeof LoggingsPallet = "blue",
 		advanced: LoggingsInitOptions<Config, Ps> = {},
 	) {
-		super(process.stdout, process.stderr);
 		const IsOpt = typeof opts === "object" && opts !== null;
 
 		const plugins =
@@ -156,8 +146,7 @@ export class Loggings<
 			(advanced as any)?.plugins ||
 			[];
 		if (plugins.length > 0) {
-			//override plugins
-			this.plugins = plugins;
+			this.plugins = [...this.plugins, ...plugins];
 		}
 
 		const initialConfig = {
@@ -295,31 +284,6 @@ export class Loggings<
 		}
 
 		return Loggings;
-	}
-
-	/**
-	 * Overrides the global `console` with this specific logger instance.
-	 * Allows native `console.log`, `console.error`, etc., to use Loggings' formatting and plugins.
-	 *
-	 * @param logger - The Loggings instance to use as the global console.
-	 */
-	public static useConsole(logger: InstanceType<typeof Loggings>) {
-		global.__INTERNAL_LOGGINGS_INSTANCE__ = logger;
-		global.console = {
-			...global.console,
-			log: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "info"),
-			error: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "error"),
-			warn: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "warn"),
-			info: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "info"),
-			debug: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "debug"),
-			trace: (...messages) =>
-				global.__INTERNAL_LOGGINGS_INSTANCE__.controller(messages, "trace"),
-		};
 	}
 
 	/**
