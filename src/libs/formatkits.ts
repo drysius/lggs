@@ -238,6 +238,42 @@ export const LOGGINGS_FORMATKITS: LoggingsFormatKitFunction[] = [
 ];
 
 /**
+ * Sprintf implementation for Loggings
+ */
+export function sprintf(format: string, args: any[], nocolor: boolean): { result: string; consumed: number };
+export function sprintf(format: string, ...args: any[]): string;
+export function sprintf(format: string, ...args: any[]): string | { result: string; consumed: number } {
+    const isInternal = Array.isArray(args[0]) && typeof args[1] === 'boolean';
+    const actualArgs = isInternal ? args[0] : args;
+    const nocolor = isInternal ? args[1] : false;
+
+    let consumed = 0;
+    const result = format.replace(/%([a-zA-Z%])/g, (match, char) => {
+        if (match === '%%') return '%';
+        if (consumed >= actualArgs.length) return match;
+
+        const arg = actualArgs[consumed++];
+        switch (char) {
+            case 's': return String(arg);
+            case 'd': return String(Math.floor(Number(arg)));
+            case 'i': return String(parseInt(String(arg)));
+            case 'f': return String(parseFloat(String(arg)));
+            case 'j': try { return JSON.stringify(arg); } catch { return '[Circular]'; }
+            case 'o':
+            case 'O': return _inspect(arg, nocolor);
+            default:
+                consumed--; // didn't consume
+                return match;
+        }
+    });
+
+    if (isInternal) {
+        return { result, consumed };
+    }
+    return result;
+}
+
+/**
  * Loggings FormatKit Controller
  * 
  * Processes text by applying the defined FormatKits, allowing logs to be styled
@@ -261,29 +297,48 @@ export const LoggingsFormatKitController = (
     extraformats: LoggingsFormatKitFunction[] = [],
     nocolor = false
 ) => {
-    let output = typeof texts === "string" ? [texts] : [...texts]; 
+    let inputs = Array.isArray(texts) ? texts : [texts];
     const tools = [...LOGGINGS_FORMATKITS, ...extraformats];
-    
-    output = output.map(input => {
+    let output: string[] = [];
+
+    // Sprintf Support
+    if (inputs.length > 0 && typeof inputs[0] === 'string' && inputs.length > 1) {
+        // Simple heuristic: if string contains %, try sprintf
+        // Or always try? Node.js util.format always tries.
+        const { result, consumed } = sprintf(inputs[0], inputs.slice(1), nocolor);
+        output.push(result);
+        // Remove consumed args + format string
+        inputs = inputs.slice(1 + consumed);
+    }
+
+    // Process remaining inputs
+    inputs.forEach((input: any) => {
         if (typeof input === "string") {
-            let changed = false;
-            let iterations = 0;
-            const max = 10;
-            let current = input;
-            
-            do {
-                changed = false;
-                tools.forEach(func => {
-                    const nextupt = func(nocolor, current);
-                    if (nextupt !== current) changed = true;
-                    current = nextupt;
-                });
-                iterations++;
-            } while (changed && iterations < max);
-            
-            return current;
+            output.push(input);
+        } else {
+            output.push(_inspect(input, nocolor));
         }
-        return _inspect(input, nocolor);
+    });
+
+    // Apply FormatKits to all string parts
+    output = output.map(current => {
+        let changed = false;
+        let iterations = 0;
+        const max = 10;
+        
+        do {
+            changed = false;
+            tools.forEach(func => {
+                const nextupt = func(nocolor, current);
+                if (nextupt !== current) {
+                    changed = true;
+                    current = nextupt;
+                }
+            });
+            iterations++;
+        } while (changed && iterations < max);
+        
+        return current;
     });
 
     return output.join(" ");

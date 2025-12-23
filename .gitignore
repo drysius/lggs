@@ -8,7 +8,6 @@ out
 dist
 *.tgz
 logs
-tests
 bun.lockb
 
 # code coverage

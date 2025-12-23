@@ -68,7 +68,7 @@ await writeFile('mjs/package.json', JSON.stringify({ type: 'module' }, null, 2))
 
 const dtsPath = join(process.cwd(), 'loggings.d.ts')
 let dtsCode = generateDtsBundle([{
-  filePath: join(process.cwd(), 'src/loggings.ts'),
+  filePath: join(process.cwd(), 'src/index.ts'),
   output: {
     sortNodes: true,
     exportReferencedTypes: true,

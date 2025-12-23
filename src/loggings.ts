@@ -11,10 +11,11 @@ export * from "./libs/utils";
 export * from "./libs/formatkits";
 import { LoggingsPallet } from "./libs/pallet";
 import { Console } from "console";
-import defaults, { type LoggingsBaseConfig, type LoggingsConstructorConfig } from "./libs/defaults";
+import defaults, { type LoggingsBaseConfig } from "./libs/defaults";
 import { ConsolePlugin } from "./libs/plugins/console";
 import { RegisterPlugin } from "./libs/plugins/register";
-import type { LoggingsLevel, LoggingsMessage, LoggingsPlugin, LoggingsPluginData, LoggingsPluginsConfig, LoggingsPluginsConfiguration } from "./types";
+import type { LoggingsLevel, LoggingsMessage, LoggingsPlugin, LoggingsPluginData } from "./types";
+import { deepMerge } from "./libs/utils";
 
 /**
  * Default plugins used in the logging system.
@@ -27,7 +28,7 @@ declare const global: typeof globalThis & { __INTERNAL_LOGGINGS_INSTANCE__: Inst
  * a structured logging system with plugin support.
  */
 export class Loggings<
-    const in out Plugins extends LoggingsPlugin<any>[] = typeof LoggingsDefaultPlugins,
+    Config extends object = {}
 > extends Console {
     /**
      * Global logging configuration.
@@ -35,22 +36,28 @@ export class Loggings<
     public static configs: Record<string, any> = defaults;
 
     /**
-     * Instance-specific logging configuration.
+     * Instance-specific logging configuration overrides.
      */
-    public configs: Omit<LoggingsConstructorConfig<Plugins>, "plugins">;
+    public configs: Partial<Config & LoggingsBaseConfig>;
 
     /**
-     * Get all instance configurations including plugins configurations
+     * Get all instance configurations including plugins configurations,
+     * merging Global Configs -> Plugin Defaults -> Instance Configs.
      */
-    public get allconfigs() {
-        return Object.assign({ ...Loggings.allconfigs, ...this.configs })
+    public get allconfigs(): Config & LoggingsBaseConfig {
+        const pluginDefaults = Loggings.pluginLoader(this.plugins).map(a => a.default);
+        // Start with Global Configs
+        // Merge Plugin Defaults
+        // Merge Instance Configs
+        return deepMerge({} as Record<string, any>, Loggings.configs, ...pluginDefaults, this.configs) as Config & LoggingsBaseConfig;
     }
 
     /**
      * Get all Globals configurations including plugins configurations
      */
     public static get allconfigs() {
-        return Object.assign(Loggings.configs, ...Loggings.pluginLoader(this.plugins).map(a => a.default))
+        const pluginDefaults = Loggings.pluginLoader(this.plugins).map(a => a.default);
+        return deepMerge({}, Loggings.configs, ...pluginDefaults);
     }
 
     /**
@@ -61,29 +68,36 @@ export class Loggings<
     /**
      * Instance-specific plugins.
      */
-    public plugins: Plugins;
+    public plugins: LoggingsPlugin<any>[] = LoggingsDefaultPlugins;
 
-    // Old loggings format
-    constructor(title?: string, color?: keyof typeof LoggingsPallet, advanced?: Partial<LoggingsBaseConfig> & { plugins?: Plugins } & Partial<LoggingsPluginsConfig<Plugins>> & {
-        plugins?: typeof LoggingsDefaultPlugins
-    })
-    // New loggings format
-    constructor(advanced: Partial<LoggingsBaseConfig> & { plugins?: Plugins } & Partial<LoggingsPluginsConfig<Plugins>> & {
-        plugins?: typeof LoggingsDefaultPlugins
-    })
     /**
-     * Constructor supporting both old and new format configurations.
-     *
-     * @param opts Configuration options or a string title.
-     * @param color Color for logging messages.
-     * @param advanced Advanced logging configurations.
+     * Constructor with title and optional color/advanced config.
+     * @param title Title of the logger.
+     * @param color Color of the title.
+     * @param advanced Advanced configuration.
      */
-    constructor(opts?: Partial<LoggingsBaseConfig> | string, color: keyof typeof LoggingsPallet = "blue", advanced = {}) {
+    constructor(title: string, color?: keyof typeof LoggingsPallet, advanced?: Partial<LoggingsBaseConfig & Config>);
+    /**
+     * Constructor with configuration object.
+     * @param config Configuration object.
+     */
+    constructor(config?: Partial<LoggingsBaseConfig & Config>);
+    /**
+     * Constructor implementation.
+     */
+    constructor(opts?: Partial<LoggingsBaseConfig & Config> | string, color: keyof typeof LoggingsPallet = "blue", advanced: Partial<LoggingsBaseConfig & Config> = {}) {
         super(process.stdout, process.stderr);
         const IsOpt = typeof opts == "object";
-        //@ts-expect-error
-        this.plugins = [...(IsOpt ? opts?.plugins ?? [] : []), ...(advanced?.plugins ?? [])] as unknown as Plugins;
-        this.configs = { color, ...advanced, ...(typeof opts == "string" ? { title: opts } : opts) } as unknown as LoggingsConstructorConfig<Plugins>;
+        
+        // Handle plugins from options if passed (legacy support or direct passing)
+        const plugins = (IsOpt ? (opts as any)?.plugins ?? [] : []) || (advanced as any)?.plugins || [];
+        if (plugins.length > 0) {
+             this.plugins = [...this.plugins, ...plugins];
+        }
+
+        const initialConfig = { color, ...advanced, ...(typeof opts == "string" ? { title: opts } : opts) };
+        this.configs = initialConfig as Partial<Config & LoggingsBaseConfig>;
+        
         Loggings.pluginLoader(this.plugins).forEach((plugin) => {
             if (plugin.onInit) plugin.onInit(this.allconfigs);
         });
@@ -112,23 +126,59 @@ export class Loggings<
     }
 
     /**
+     * Adds a plugin to the instance.
+     * 
+     * @param plugin The plugin to add.
+     * @param config Optional configuration for the plugin.
+     * @returns The Loggings instance.
+     */
+    public plugin<T extends object, LoggingsExtended extends Loggings<any> = Loggings<Config & T>>(plugin: LoggingsPlugin<T>, config?: T): LoggingsExtended {
+        this.plugins.push(plugin);
+        if (config) {
+            this.configs = deepMerge(this.configs, config);
+        }
+        
+        // Re-init the new plugin
+        const pluginData = typeof plugin === 'function' ? plugin() : plugin;
+        if (pluginData.onInit) {
+            pluginData.onInit(this.allconfigs as unknown as T);
+        }
+        
+        return this as unknown as LoggingsExtended;
+    }
+
+    /**
+     * Adds a global plugin.
+     * 
+     * @param plugin The plugin to add.
+     * @param config Optional configuration for the plugin.
+     * @returns The Loggings class.
+     */
+    public static plugin<T extends object, LoggingsConfigd extends Loggings<any> = Loggings<T>>(plugin: LoggingsPlugin<T>, config?: T): typeof Loggings {
+        Loggings.plugins.push(plugin);
+        if (config) {
+            Loggings.configs = deepMerge(Loggings.configs, config);
+        }
+        return Loggings;
+    }
+
+    /**
      * Updates the logging configuration dynamically.
      *
      * @param advanced New configuration settings.
      * @returns Updated Loggings instance.
      */
-    public config<const NewPlugins extends LoggingsPlugin<any>[] = typeof LoggingsDefaultPlugins>(advanced: Partial<LoggingsBaseConfig> & { plugins?: NewPlugins } & Partial<LoggingsPluginsConfig<NewPlugins>> = {}): Loggings<NewPlugins> {
+    public config<LoggingsConfigd extends Loggings<any> = Loggings<Config>>(advanced: Partial<(LoggingsConfigd extends Loggings<infer C> ? C : any) & LoggingsBaseConfig> & { plugins?: LoggingsPlugin<any>[] } = {}): LoggingsConfigd {
         if (advanced?.plugins) {
-            this.plugins.length = 0;
-            //@ts-expect-error
-            this.plugins = advanced?.plugins ?? [];
+            this.plugins = advanced.plugins;
         }
-        this.configs = { ...this.configs, ...advanced };
+        // Use deepMerge to update configs
+        this.configs = deepMerge(this.configs, advanced as any);
+        
         Loggings.pluginLoader(this.plugins, true).forEach((plugin) => {
             if (plugin.onInit) plugin.onInit(this.allconfigs);
         });
-        //@ts-expect-error
-        return this;
+        return this as unknown as LoggingsConfigd;
     }
 
     /**
@@ -137,20 +187,18 @@ export class Loggings<
      * @param advanced New configuration settings.
      * @returns Updated Loggings instance.
      */
-    public static config<const NewPlugins extends LoggingsPlugin<any>[] = typeof LoggingsDefaultPlugins>(
-        advanced: Partial<LoggingsBaseConfig> &
-        { plugins?: NewPlugins } &
-            Partial<LoggingsPluginsConfig<NewPlugins>> = {}): Loggings<NewPlugins> {
+    public static config<LoggingsConfigd extends Loggings<any> = Loggings>(
+        advanced: Partial<(LoggingsConfigd extends Loggings<infer C> ? C : any) & LoggingsBaseConfig> &
+        { plugins?: LoggingsPlugin<any>[] } = {}): LoggingsConfigd {
         if (advanced?.plugins) {
-            Loggings.plugins.length = 0;
-            Loggings.plugins = advanced?.plugins ?? [];
+            Loggings.plugins = advanced.plugins;
         }
-        this.configs = { ...Loggings.configs, ...advanced };
+        Loggings.configs = deepMerge(Loggings.configs, advanced);
+        
         Loggings.pluginLoader(Loggings.plugins, true).forEach((plugin) => {
             if (plugin.onInit) plugin.onInit(this.allconfigs);
         });
-        //@ts-expect-error
-        return this;
+        return new Loggings(advanced) as unknown as LoggingsConfigd;
     }
 
     /**
@@ -178,15 +226,16 @@ export class Loggings<
      * @param level Log level.
      */
     public controller(msgs: LoggingsMessage[], level: LoggingsLevel) {
+        const fullConfig = this.allconfigs; // Compute once
         Loggings.pluginLoader(this.plugins).forEach((plugin) => {
             try {
-                let messages = plugin.onPreMessage ? plugin.onPreMessage(this.allconfigs, level, msgs) : msgs;
+                let messages = plugin.onPreMessage ? plugin.onPreMessage(fullConfig, level, msgs) : msgs;
                 if (messages && plugin.onMessage) {
-                    const message = plugin.onMessage(this.allconfigs, level, messages);
-                    if (plugin.onSend) plugin.onSend(this.allconfigs, level, message);
+                    const message = plugin.onMessage(fullConfig, level, messages);
+                    if (plugin.onSend) plugin.onSend(fullConfig, level, message);
                 }
             } catch (e) {
-                if (plugin.onError) plugin.onError(this.allconfigs, e as Error);
+                if (plugin.onError) plugin.onError(fullConfig, e as Error);
                 else throw e;
             }
         });

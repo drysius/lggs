@@ -1,4 +1,4 @@
-import type { LoggingsFormatKitFunction, LoggingsLevel, LoggingsPlugin, LoggingsPluginsConfig } from "../types";
+import type { LoggingsFormatKitFunction, LoggingsLevel, LoggingsPlugin } from "../types";
 import { LOGGINGS_FORMATKITS } from "./formatkits";
 
 export default {
@@ -7,11 +7,6 @@ export default {
   formatKits: LOGGINGS_FORMATKITS,
   plugins: []
 } as LoggingsBaseConfig;
-
-export type EnsureLoggingsPlugins<T extends LoggingsPlugin<any>[]> =
-  T extends []
-  ? LoggingsPlugin<any>[]
-  : { [K in keyof T]: T[K] extends () => infer R ? R : T[K] };
 
 export type LoggingsBaseConfig = {
   /**
@@ -57,4 +52,4 @@ export type LoggingsConstructorConfig<Plugins extends LoggingsPlugin<any>[] = []
    * @default [ConsolePlugin, RegisterPlugin]
    */
   plugins: Plugins;
-} & LoggingsBaseConfig & Partial<LoggingsPluginsConfig<EnsureLoggingsPlugins<Plugins>>>; 
+} & LoggingsBaseConfig; 

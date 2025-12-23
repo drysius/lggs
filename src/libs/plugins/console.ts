@@ -38,8 +38,8 @@ export const ConsolePlugin = (opts: LoggingsConsoleOptions = {}): LoggingsPlugin
     onPreMessage: (config, level, messages) => {
         if(level == "txt") return undefined;
         const logLevel = LoggingsLevelToNumber(config.console_level ?? config.level!);
-        const globalLevel = LoggingsLevelToNumber(config.level!);
-        if (!config.console || logLevel < globalLevel) return undefined;
+        const msgLevel = LoggingsLevelToNumber(level);
+        if (!config.console || msgLevel > logLevel) return undefined;
 
         return opts.onPreMessage ? opts.onPreMessage(config, level, messages) : messages;
     },
@@ -77,19 +77,21 @@ export const ConsolePlugin = (opts: LoggingsConsoleOptions = {}): LoggingsPlugin
     onSend(config, level, message) {
         if (opts.onSend) opts.onSend(config, level, message);
         const nmessage = `${message}\n`;
+        const isError = ["error", "warn"].includes(level.toLowerCase());
+        
         switch (runtime) {
             case Runtime.Deno: {
                 const output = new TextEncoder().encode(nmessage);
                 //@ts-ignore Ignore Deno
-                return ["info", "debug"].includes(level.toLowerCase()) ? Deno.stderr.info(output) : Deno.stdout.error(output);
+                return isError ? Deno.stderr.write(output) : Deno.stdout.write(output);
             }
             case Runtime.Node: {
                 //@ts-ignore Ignore Node
-                return ["info", "debug"].includes(level.toLowerCase()) ? process.stderr.write(nmessage) : process.stdout.write(nmessage);
+                return isError ? process.stderr.write(nmessage) : process.stdout.write(nmessage);
             }
             case Runtime.Bun: {
                 //@ts-ignore Ignore Bun
-                return ["info", "debug"].includes(level.toLowerCase()) ? Bun.write(Bun.stderr, nmessage) : Bun.write(Bun.stdout, nmessage);
+                return isError ? Bun.write(Bun.stderr, nmessage) : Bun.write(Bun.stdout, nmessage);
             }
             case Runtime.Browser: {
                 // Navegador usa console para logging

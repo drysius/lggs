@@ -1,5 +1,6 @@
 import { Runtime, runtime } from "./utils";
 import { inspect as Inpector } from "node:util";
+
 const opts = {
     depth: null,
     showHidden: false,
@@ -9,43 +10,47 @@ const opts = {
     compact: false
 };
 
-let _inspect = (msg: string | boolean | object | number, _nocolor: boolean = false) => {
-    return msg as string;
-}
-
-switch (runtime) {
-    case Runtime.Node: {
-        _inspect = (msg, nocolor = false) => Inpector(msg, {
-            colors: !nocolor,
-            ...opts
-        });
-        break;
-    }
-    case Runtime.Bun: {
-        try {
-            // @ts-expect-error @types/Bun not installed
-            _inspect = (msg, nocolor = false) => Bun.inspect(msg, {
+const _inspect = (msg: any, nocolor: boolean = false) => {
+    switch (runtime) {
+        case Runtime.Node: {
+            return Inpector(msg, {
                 colors: !nocolor,
                 ...opts
             });
-        } catch (e) {
-            console.warn("Failed to use Bun.inspect, using fallback");
         }
-        break;
-    }
-    case Runtime.Deno: {
-        try {
-            // @ts-expect-error @types/Deno not installed
-            _inspect = (msg, nocolor = false) => Deno.inspect(msg, {
-                colors: !nocolor,
-                ...opts
-            });
-        } catch (e) {
-            console.warn("Failed to use Deno.inspect, using fallback");
+        case Runtime.Bun: {
+            try {
+                // @ts-expect-error @types/Bun not installed
+                return Bun.inspect(msg, {
+                    colors: !nocolor,
+                    ...opts
+                });
+            } catch (e) {
+                return String(msg);
+            }
         }
-        break;
+        case Runtime.Deno: {
+            try {
+                // @ts-expect-error @types/Deno not installed
+                return Deno.inspect(msg, {
+                    colors: !nocolor,
+                    ...opts
+                });
+            } catch (e) {
+                return String(msg);
+            }
+        }
+        default: {
+            if (typeof msg === 'object') {
+                try {
+                    return JSON.stringify(msg, null, 2);
+                } catch {
+                    return String(msg);
+                }
+            }
+            return String(msg);
+        }
     }
 }
-
 
 export default _inspect;
