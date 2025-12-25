@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loggings Terminal Demo</title>
+  <title>Lggs Terminal Demo</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -165,7 +165,7 @@
       <div class="terminal-dot bg-red-500"></div>
       <div class="terminal-dot bg-yellow-500"></div>
       <div class="terminal-dot bg-green-500"></div>
-      <div class="terminal-title">Loggings Terminal Demo</div>
+      <div class="terminal-title">Lggs Terminal Demo</div>
     </div>
     <div id="output"></div>
     <div class="terminal-input-container">
@@ -174,7 +174,7 @@
     </div>
   </div>
   <script type="module">
-    import { Loggings, ConsolePlugin, colorpik, LoggingsPallet } from "/browser/browser.js";
+    import { Lggs, ConsolePlugin, colorpik, LggsPallet } from "/browser/browser.js";
 
     // Theme toggle functionality
     const themeToggle = document.getElementById('themeToggle');
@@ -196,8 +196,8 @@
       fontSize: 14,
       lineHeight: 1.2,
       theme: {
-        background: LoggingsPallet.zinc95,
-        foreground: LoggingsPallet.zinc10,
+        background: LggsPallet.zinc95,
+        foreground: LggsPallet.zinc10,
         cursor: '#f3f4f6',
         selection: '#9ca3af',
         black: '#000',
@@ -220,12 +220,12 @@
     const input = document.getElementById("input");
     window.addEventListener("resize", () => fitAddon.fit());
 
-    // Configure Loggings
-    Loggings.config({
+    // Configure Lggs
+    Lggs.config({
       plugins: []
     });
 
-    const logger = new Loggings({
+    const logger = new Lggs({
       format: "{message}",
       plugins:[
       ConsolePlugin({
@@ -237,8 +237,8 @@
 
     // Welcome messages with format kit examples
     const messages = [
-      "[Welcome].green to the [Loggings].green-b Terminal Demo!",
-      "[Loggings].green-b is an advanced logging system with [rich formatting options].blue-b.",
+      "[Welcome].green to the [Lggs].green-b Terminal Demo!",
+      "[Lggs].green-b is an advanced logging system with [rich formatting options].blue-b.",
       "Try these format kits:",
       "  • [Colors].red-b: [This is red text].red and [this is bold blue].blue-b",
       "  • [Gradient].blue-b: [This text has a color gradient]gb(blue,purple)",
@@ -341,14 +341,14 @@
       logger.log("  • [styles].blue-b - Show text style examples");
       logger.log("  • [echo <text>].blue-b - Echo text with formatting");
       logger.log("  • [clear].blue-b - Clear the terminal");
-      logger.log("  • [about].blue-b - About Loggings");
+      logger.log("  • [about].blue-b - About Lggs");
     }
 
     // Colors command
     function showColors() {
       logger.log("[Available Colors].green-b");
 
-      for (const color in LoggingsPallet) {
+      for (const color in LggsPallet) {
         logger.log(`  • [${color}].${color}-b - [${color}].${color} (bold)`);
       }
     }
@@ -389,8 +389,8 @@
 
     // About command
     function showAbout() {
-      logger.log("[About Loggings].green-b");
-      logger.log("Loggings is an advanced terminal styling and logging system.");
+      logger.log("[About Lggs].green-b");
+      logger.log("Lggs is an advanced terminal styling and logging system.");
       logger.log("Features:");
       logger.log("  • [Rich text formatting].blue");
       logger.log("  • [Color support].red");
@@ -400,7 +400,7 @@
       logger.log("  • [Plugin system].cyan");
       logger.log("");
       logger.log("Version: [3.0.0].green-b");
-      logger.log("Documentation: [https://github.com/drysius/loggings].blue");
+      logger.log("Documentation: [https://github.com/drysius/lggs].blue");
     }
   </script>
 </body>

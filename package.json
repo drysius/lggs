@@ -1,19 +1,19 @@
 {
-  "name": "loggings",
+  "name": "llgs",
   "type": "module",
   "description": "Simple log system for your node js application, supported colors.",
-  "version": "3.1.1",
-  "main": "cjs/loggings.cjs",
-  "module": "mjs/loggings.js",
-  "types": "loggings.d.ts",
+  "version": "1.0.0",
+  "main": "cjs/lggs.cjs",
+  "module": "mjs/lggs.js",
+  "types": "lggs.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/drysius/Loggings.git"
+    "url": "git+https://github.com/drysius/lggs.git"
   },
   "typesVersions": {
     "*": {
       ".": [
-        "loggings.d.ts"
+        "lggs.d.ts"
       ],
       "browser": [
         "browser.d.ts"
@@ -22,9 +22,9 @@
   },
   "exports": {
     ".": {
-      "types": "./loggings.d.ts",
-      "import": "./mjs/loggings.js",
-      "require": "./cjs/loggings.cjs"
+      "types": "./lggs.d.ts",
+      "import": "./mjs/lggs.js",
+      "require": "./cjs/lggs.cjs"
     },
     "./browser": {
       "types": "./browser.d.ts",
@@ -36,7 +36,9 @@
     "log",
     "backend",
     "caeljs",
-    "loggings",
+    "lggs",
+    "lggs",
+    "lggs",
     "color",
     "logs",
     "logger",
@@ -59,9 +61,9 @@
   "author": "Drysius",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/drysius/Loggings/issues"
+    "url": "https://github.com/drysius/lggs/issues"
   },
-  "homepage": "https://github.com/drysius/Loggings#readme",
+  "homepage": "https://github.com/drysius/lggs#readme",
   "scripts": {
     "build": "tsc --project tsconfig.test.json && bun run build.ts",
     "docs": "typedoc",

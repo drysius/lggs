@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import Loggings from "../src/loggings";
+import Lggs from "../src/lggs";
 import fs from "fs";
 import path from "path";
 
-describe("Loggings Register (File System)", () => {
+describe("Lggs Register (File System)", () => {
     const testLogDir = "./test_logs";
 
     beforeAll(() => {
@@ -19,7 +19,7 @@ describe("Loggings Register (File System)", () => {
     });
 
     it("should create log files", () => {
-        const logger = new Loggings({
+        const logger = new Lggs({
             title: "FileTest",
             register: true,
             register_dir: testLogDir,
@@ -56,7 +56,7 @@ describe("Loggings Register (File System)", () => {
         fs.utimesSync(file2, (now - 2000) / 1000, (now - 2000) / 1000);
         fs.utimesSync(file3, (now - 1000) / 1000, (now - 1000) / 1000);
 
-        const logger = new Loggings({
+        const logger = new Lggs({
             title: "RotateTest",
             register: true,
             register_dir: rotateDir,

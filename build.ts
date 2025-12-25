@@ -6,7 +6,7 @@ import { mkdir } from 'fs/promises'
 
 const sharedConfig: Options = {
   platform: 'node',
-  entry: ['src/loggings.ts'],
+  entry: ['src/lggs.ts'],
 }
 
 // Node.js CJS Build
@@ -71,9 +71,9 @@ await writeFile('mjs/package.json', JSON.stringify({ type: 'module' }, null, 2))
 await writeFile('browser/package.json', JSON.stringify({ type: 'module' }, null, 2))
 
 // Generate Main DTS
-const dtsPath = join(process.cwd(), 'loggings.d.ts')
+const dtsPath = join(process.cwd(), 'lggs.d.ts')
 let dtsCode = generateDtsBundle([{
-  filePath: join(process.cwd(), 'src/loggings.ts'),
+  filePath: join(process.cwd(), 'src/lggs.ts'),
   output: {
     sortNodes: true,
     exportReferencedTypes: true,

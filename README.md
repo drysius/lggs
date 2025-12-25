@@ -1,25 +1,25 @@
-## Loggings
+## Lggs
 
-Loggings is a high-performance, structured logging system for your Node.js and Browser applications. It offers a flexible plugin system, deep configuration merging, custom formatting kits (including gradients and nested styles), and zero external dependencies.
+Lggs is a high-performance, structured logging system for your Node.js and Browser applications. It offers a flexible plugin system, deep configuration merging, custom formatting kits (including gradients and nested styles), and zero external dependencies.
 
 ### Installation
 
-You can install Loggings via npm:
+You can install Lggs via npm:
 
 ```bash
-npm install loggings
+npm install lggs
 ```
 
 ### Browser Support
 
-You can use Loggings directly in the browser via ESM import:
+You can use Lggs directly in the browser via ESM import:
 
 ```javascript
-import { Loggings } from "https://unpkg.com/loggings/browser/browser.js"; // Example path, adjust based on CDN
+import { Lggs } from "https://unpkg.com/lggs/browser/browser.js"; // Example path, adjust based on CDN
 // or local
-// import { Loggings } from "./node_modules/loggings/browser/browser.js";
+// import { Lggs } from "./node_modules/lggs/browser/browser.js";
 
-const logger = new Loggings({
+const logger = new Lggs({
     title: "Browser",
     color: "blue"
 });
@@ -31,9 +31,9 @@ logger.log("Hello [World].blue-b");
 #### Basic Usage
 
 ```typescript
-import { Loggings } from "loggings";
+import { Lggs } from "lggs";
 
-const logger = new Loggings({
+const logger = new Lggs({
     title: "MyApp",
     color: "green",
     level: "info"
@@ -46,19 +46,19 @@ logger.error("Error occurred");
 
 #### Configuration
 
-Loggings supports deep configuration merging. You can configure it globally or per instance.
+Lggs supports deep configuration merging. You can configure it globally or per instance.
 
 ```typescript
-import { Loggings } from "loggings";
+import { Lggs } from "lggs";
 
 // Global Configuration (affects all new instances)
-Loggings.config({
+Lggs.config({
     register_dir: "./logs",
     format: "[{status}] {message}"
 });
 
 // Instance Configuration
-const logger = new Loggings({
+const logger = new Lggs({
     title: "Worker",
     register_filename: "worker.log"
 });
@@ -71,7 +71,7 @@ logger.config({
 
 #### Formatting & Colors
 
-Loggings features a powerful formatting engine supporting legacy bracket syntax, gradients, and nested styles.
+Lggs features a powerful formatting engine supporting legacy bracket syntax, gradients, and nested styles.
 
 ```typescript
 logger.info("This is [Green].green");
@@ -82,14 +82,14 @@ logger.info("(Gradient Text)gd(red,blue)"); // Gradient from red to blue
 
 #### Plugins
 
-Extend functionality with plugins. Loggings comes with `ConsolePlugin` and `RegisterPlugin` (File System) by default in Node.js.
+Extend functionality with plugins. Lggs comes with `ConsolePlugin` and `RegisterPlugin` (File System) by default in Node.js.
 
 ```typescript
-import { Loggings } from "loggings";
+import { Lggs } from "lggs";
 import { MyCustomPlugin } from "./my-plugin";
 
 // Add a plugin to an instance
-const logger = new Loggings({
+const logger = new Lggs({
     plugins: [MyCustomPlugin]
 });
 
@@ -103,7 +103,7 @@ logger.plugin(MyCustomPlugin, { customOption: true });
 
 ```typescript
 // Option 1: Object configuration
-new Loggings({
+new Lggs({
     title: "App",
     color: "blue",
     level: "info",
@@ -111,7 +111,7 @@ new Loggings({
 });
 
 // Option 2: Legacy signature
-new Loggings("App", "blue", { level: "info" });
+new Lggs("App", "blue", { level: "info" });
 ```
 
 #### Methods
@@ -122,7 +122,7 @@ new Loggings("App", "blue", { level: "info" });
 - `logger.debug(...)`: Log debug message.
 - `logger.trace(...)`: Log trace message.
 - `logger.txt(...)`: Log raw text (file only by default).
-- `Loggings.useConsole(logger)`: Override global console methods with this logger.
+- `Lggs.useConsole(logger)`: Override global console methods with this logger.
 
 ### License
 
@@ -130,4 +130,4 @@ This project is licensed under the MIT license.
 
 ### Contributing & Support
 
-Contributions are welcome! Please open an issue on the [GitHub repository](https://github.com/drysius/loggings).
+Contributions are welcome! Please open an issue on the [GitHub repository](https://github.com/drysius/lggs).

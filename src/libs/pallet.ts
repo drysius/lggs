@@ -5,7 +5,7 @@ import { rgb } from "./utils";
  * but instead of using "color-num" use "colornum"
  * @example "slate10" // equivalent slate-100
  */
-export const LoggingsTailwindColors = {
+export const LggsTailwindColors = {
 	slate5: "#f8fafc",
 	slate10: "#f1f5f9",
 	slate20: "#e2e8f0",
@@ -250,7 +250,7 @@ export const LoggingsTailwindColors = {
 	rose95: "#4c0519",
 } as const;
 
-export const LoggingsAnsiSpecials = {
+export const LggsAnsiSpecials = {
 	reset: "\x1b[0m",
 	bold: "\x1b[1m",
 	italic: "\x1b[3m",
@@ -261,7 +261,7 @@ export const LoggingsAnsiSpecials = {
 	strikethrough: "\x1b[9m",
 	none: "\x1b[22m",
 };
-export const LoggingsCommonPallet = {
+export const LggsCommonPallet = {
 	red: "#ff0000",
 	green: "#00ff00",
 	lime: "#80ff80",
@@ -299,17 +299,17 @@ export const LoggingsCommonPallet = {
 	dgray: "#696969",
 	gainsboro: "#dcdcdc",
 };
-export const LoggingsPallet = {
-	...LoggingsCommonPallet,
-	...LoggingsAnsiSpecials,
-	...LoggingsTailwindColors,
+export const LggsPallet = {
+	...LggsCommonPallet,
+	...LggsAnsiSpecials,
+	...LggsTailwindColors,
 };
 const Pallet = {
-	...LoggingsCommonPallet,
-	...LoggingsTailwindColors,
+	...LggsCommonPallet,
+	...LggsTailwindColors,
 };
 /**
- * Loggings convert hex to hexadecimal number
+ * Lggs convert hex to hexadecimal number
  */
 export const toHexadecimal = (color: string | number) => {
 	let current: string | null = null;
@@ -381,8 +381,8 @@ export const termcolor = (
 		}
 	}
 
-	if (LoggingsPallet[color as keyof typeof LoggingsPallet]) {
-		const palletcolor = LoggingsPallet[color as keyof typeof LoggingsPallet];
+	if (LggsPallet[color as keyof typeof LggsPallet]) {
+		const palletcolor = LggsPallet[color as keyof typeof LggsPallet];
 		return termcolor(palletcolor, background);
 	}
 
@@ -392,11 +392,12 @@ export const termcolor = (
 		return termcolor(tailcolor.slice(0, tailcolor.length - 1), background);
 	}
 
-	if (/^\\x1b\[/.test(color)) {
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: ignore this server
+	if (/^\x1b\[/.test(color)) {
 		return color;
 	}
 
-	return LoggingsAnsiSpecials.reset;
+	return LggsAnsiSpecials.reset;
 };
 
 export function colorpik(
@@ -409,7 +410,7 @@ export function colorpik(
 		case typeof color === "undefined": {
 			const color = termcolor(key);
 			if (color) {
-				return color + text + LoggingsAnsiSpecials.reset;
+				return color + text + LggsAnsiSpecials.reset;
 			}
 			return text;
 		}
@@ -417,7 +418,7 @@ export function colorpik(
 			return text;
 		}
 		default: {
-			return termcolor(color) + text + LoggingsAnsiSpecials.reset;
+			return termcolor(color) + text + LggsAnsiSpecials.reset;
 		}
 	}
 }

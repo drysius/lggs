@@ -1,8 +1,8 @@
 import { describe, it, expect, mock, beforeAll, afterAll } from "bun:test";
-import Loggings from "../src/loggings";
+import Lggs from "../src/lggs";
 import { setRuntime, Runtime } from "../src/libs/utils";
 
-describe("Loggings Console Plugin", () => {
+describe("Lggs Console Plugin", () => {
     // We force Node runtime to be able to mock process.stdout/stderr easily if needed,
     // although Bun has its own way, the library checks `runtime` variable.
     beforeAll(() => {
@@ -14,7 +14,7 @@ describe("Loggings Console Plugin", () => {
     });
 
     it("should write to stdout for info level", () => {
-        const logger = new Loggings({ 
+        const logger = new Lggs({ 
             title: "ConsoleTest", 
             console: true,
             level: "info"
@@ -35,7 +35,7 @@ describe("Loggings Console Plugin", () => {
     });
 
     it("should write to stderr for error level", () => {
-        const logger = new Loggings({ 
+        const logger = new Lggs({ 
             title: "ConsoleTest", 
             console: true 
         });
@@ -55,7 +55,7 @@ describe("Loggings Console Plugin", () => {
     });
 
     it("should respect log levels (ignore debug when level is info)", () => {
-        const logger = new Loggings({ 
+        const logger = new Lggs({ 
             title: "LevelTest", 
             console: true,
             level: "info" 

@@ -1,17 +1,17 @@
 import { describe, it, expect } from "bun:test";
-import Loggings from "../src/loggings";
+import Lggs from "../src/lggs";
 import { ConsolePlugin } from "../src/libs/plugins/console";
 
-describe("Loggings Core", () => {
+describe("Lggs Core", () => {
     it("should instantiate with default configuration", () => {
-        const logger = new Loggings("TestLogger");
-        expect(logger).toBeInstanceOf(Loggings);
+        const logger = new Lggs("TestLogger");
+        expect(logger).toBeInstanceOf(Lggs);
         expect(logger.allconfigs.title).toBe("TestLogger");
         expect(logger.allconfigs.level).toBe("info");
     });
 
     it("should accept configuration object in constructor", () => {
-        const logger = new Loggings({
+        const logger = new Lggs({
             title: "ConfigTest",
             level: "debug",
             color: "red"
@@ -22,7 +22,7 @@ describe("Loggings Core", () => {
     });
 
     it("should allow dynamic configuration updates", () => {
-        const logger = new Loggings("UpdateTest");
+        const logger = new Lggs("UpdateTest");
         expect(logger.allconfigs.level).toBe("info");
 
         logger.config({ level: "error", });
@@ -30,7 +30,7 @@ describe("Loggings Core", () => {
     });
 
     it("should handle plugins correctly", () => {
-        const logger = new Loggings("PluginTest");
+        const logger = new Lggs("PluginTest");
         expect(logger.plugins.length).toBeGreaterThan(0); // Should have defaults
 
         // Custom plugin
@@ -50,10 +50,10 @@ describe("Loggings Core", () => {
     it("should support static configuration", () => {
         // Warning: this modifies global state, might affect other tests if not careful.
         // But we are just checking if the method exists and runs without error.
-        Loggings.config({ level: "warn" });
-        expect(Loggings.configs.level).toBe("warn");
+        Lggs.config({ level: "warn" });
+        expect(Lggs.configs.level).toBe("warn");
         
         // Reset
-        Loggings.config({ level: "info" });
+        Lggs.config({ level: "info" });
     });
 });

@@ -1,4 +1,4 @@
-import type { LoggingsLevel, TimerFormat } from "../types";
+import type { LggsLevel, TimerFormat } from "../types";
 
 const rgb_converter = (background: boolean, ...colors: number[]) => {
 	const [r, g, b] = colors.map((color) => Math.min(255, Math.max(0, color)));
@@ -39,7 +39,7 @@ export function timer(format: string): { format: string; timer: TimerFormat } {
 	return { format: formatted, timer };
 }
 
-export function LoggingsLevelToNumber(level: LoggingsLevel) {
+export function LggsLevelToNumber(level: LggsLevel) {
 	switch (level) {
 		case "debug":
 			return 4;

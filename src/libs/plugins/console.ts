@@ -1,13 +1,13 @@
-import type { LoggingsLevel, LoggingsPluginData } from "../../types";
-import type { LoggingsBaseConfig } from "../defaults";
-import { LoggingsFormatKitController } from "../formatkits";
-import { colorpik, type LoggingsPallet } from "../pallet";
-import { LoggingsLevelToNumber, Runtime, runtime, timer } from "../utils";
+import type { LggsLevel, LggsPluginData } from "../../types";
+import type { LggsBaseConfig } from "../defaults";
+import { LggsFormatKitController } from "../formatkits";
+import { colorpik, type LggsPallet } from "../pallet";
+import { LggsLevelToNumber, Runtime, runtime, timer } from "../utils";
 
 /**
- * Loggings Console Default options
+ * Lggs Console Default options
  */
-export const ConsolePluginDefault: LoggingsConsoleConfig = {
+export const ConsolePluginDefault: LggsConsoleConfig = {
 	format: "[{status}] [{hours}:{minutes}:{seconds}].gray {message}",
 	status: {
 		error: "red50",
@@ -25,24 +25,24 @@ export const ConsolePluginDefault: LoggingsConsoleConfig = {
 };
 
 /**
- * Loggings Console plugin
+ * Lggs Console plugin
  *
- * Allow loggings show logs in terminal with colors
+ * Allow lggs show logs in terminal with colors
  *
  * @version 2.0.0
  */
 export const ConsolePlugin = (
-	opts: LoggingsConsoleOptions = {},
-): LoggingsPluginData<LoggingsConsoleConfig & Partial<LoggingsBaseConfig>> => ({
-	ident: "loggings-console",
+	opts: LggsConsoleOptions = {},
+): LggsPluginData<LggsConsoleConfig & Partial<LggsBaseConfig>> => ({
+	ident: "lggs-console",
 	default: ConsolePluginDefault,
 	onInit: opts.onInit,
 	onPreMessage: (config, level, messages) => {
 		if (level === "txt") return undefined;
-		const logLevel = LoggingsLevelToNumber(
-			config.console_level ?? (config.level as LoggingsLevel),
+		const logLevel = LggsLevelToNumber(
+			config.console_level ?? (config.level as LggsLevel),
 		);
-		const msgLevel = LoggingsLevelToNumber(level);
+		const msgLevel = LggsLevelToNumber(level);
 		if (!config.console || msgLevel > logLevel) return undefined;
 
 		return opts.onPreMessage
@@ -52,7 +52,7 @@ export const ConsolePlugin = (
 	onMessage(config, level, messages) {
 		config.level = config.console_level ? config.console_level : config.level;
 		if (opts.onMessage) opts.onMessage(config, level, messages);
-		let message = LoggingsFormatKitController(
+		let message = LggsFormatKitController(
 			config.format,
 			config.formatKits,
 			config.disable_colors,
@@ -83,7 +83,7 @@ export const ConsolePlugin = (
 		if (message.includes("{message}")) {
 			message = message.replace(
 				/{message}/g,
-				LoggingsFormatKitController(
+				LggsFormatKitController(
 					messages,
 					config.formatKits,
 					config.disable_colors,
@@ -127,14 +127,14 @@ export const ConsolePlugin = (
 	},
 });
 
-export type LoggingsConsoleOptions = {
-	onPreMessage?: LoggingsPluginData<LoggingsConsoleConfig>["onPreMessage"];
-	onMessage?: LoggingsPluginData<LoggingsConsoleConfig>["onMessage"];
-	onSend?: LoggingsPluginData<LoggingsConsoleConfig>["onSend"];
-	onInit?: LoggingsPluginData<LoggingsConsoleConfig>["onInit"];
+export type LggsConsoleOptions = {
+	onPreMessage?: LggsPluginData<LggsConsoleConfig>["onPreMessage"];
+	onMessage?: LggsPluginData<LggsConsoleConfig>["onMessage"];
+	onSend?: LggsPluginData<LggsConsoleConfig>["onSend"];
+	onInit?: LggsPluginData<LggsConsoleConfig>["onInit"];
 };
 
-export type LoggingsConsoleConfig = {
+export type LggsConsoleConfig = {
 	/**
 	 * Format log Message, Console print.
 	 *
@@ -146,20 +146,20 @@ export type LoggingsConsoleConfig = {
 	 */
 	format: string;
 	/**
-	 * Loggings Level
+	 * Lggs Level
 	 * Console-specific level will be used
 	 */
-	console_level?: LoggingsLevel;
+	console_level?: LggsLevel;
 	/**
 	 * Status colors
 	 */
-	status: Record<LoggingsLevel, keyof typeof LoggingsPallet>;
+	status: Record<LggsLevel, keyof typeof LggsPallet>;
 	/**
 	 * Add new Colors code(ansi or rgb code colors), used in logs functions,
 	 * e.g:
 	 * @default ```ts
-	 * import Loggings, { rgb } from "loggings";
-	 * const logger = new Loggings();
+	 * import Lggs, { rgb } from "lggs";
+	 * const logger = new Lggs();
 	 * logger.config({
 	 *     colors: {
 	 *          "ngreen": rgb(57, 255, 20)() // Neon Green
@@ -173,16 +173,16 @@ export type LoggingsConsoleConfig = {
 	 * If any color using the [].color declaration is wrong,
 	 * we will use that color instead.
 	 */
-	fallback: keyof typeof LoggingsPallet;
+	fallback: keyof typeof LggsPallet;
 	/**
 	 * In some types of hosting, the terminal does not support
 	 * ansi colors or uses the terminal to display logs.
-	 * The loggings module uses arguments that apply colors to the terminal
+	 * The lggs module uses arguments that apply colors to the terminal
 	 * using ansi codes, which can make logs difficult to read when saved in
 	 * .txt files due to the presence of several random characters.
 	 *
 	 * To solve this problem, this boolean has been added, that,
-	 * when activated, causes the loggings module to ignore the color codes
+	 * when activated, causes the lggs module to ignore the color codes
 	 * and imprint simple logs on the terminal, without color formatting.
 	 *
 	 * Hosts that this boolean becomes useful:
@@ -196,5 +196,5 @@ export type LoggingsConsoleConfig = {
 	/**
 	 * Color of title
 	 */
-	color: keyof typeof LoggingsPallet;
+	color: keyof typeof LggsPallet;
 };

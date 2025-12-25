@@ -1,6 +1,6 @@
-import type { LoggingsFormatKitFunction } from "../types";
+import type { LggsFormatKitFunction } from "../types";
 import _inspect from "./inspect";
-import { colorpik, LoggingsAnsiSpecials, toHexadecimal } from "./pallet";
+import { colorpik, LggsAnsiSpecials, toHexadecimal } from "./pallet";
 
 /**
  * Creates a logging format function that applies a parser based on a regex or string
@@ -10,12 +10,12 @@ import { colorpik, LoggingsAnsiSpecials, toHexadecimal } from "./pallet";
  * @param {(nocolor: boolean, ...text: string[]) => string} cb - Callback function to handle the extracted values.
  *   - `nocolor`: Indicates whether color formatting should be disabled.
  *   - `...text`: Captured groups from the regex applied to the input text.
- * @returns {LoggingsFormatKitFunction} Returns a function that can be used to process formatted logs.
+ * @returns {LggsFormatKitFunction} Returns a function that can be used to process formatted logs.
  */
-export const LoggingsFormatParser = (
+export const LggsFormatParser = (
 	parser: string | RegExp,
 	cb: (nocolor: boolean, ...text: string[]) => string,
-): LoggingsFormatKitFunction => {
+): LggsFormatKitFunction => {
 	return (nocolor, text) => {
 		const regex = typeof parser === "string" ? new RegExp(parser, "g") : parser;
 		return text.replace(regex, (...args) => cb(nocolor, ...args));
@@ -87,28 +87,28 @@ const GradientFunction = (
 		output.push(`\x1b[38;2;${r};${g};${b}m`, char);
 	}
 
-	output.push(LoggingsAnsiSpecials.reset);
+	output.push(LggsAnsiSpecials.reset);
 	return output.join("");
 };
 
 /**
  * Returns Gradient Text in terminal colors
  *
- * @since Loggings v3.0.0
+ * @since Lggs v3.0.0
  */
-export const LoggingsGrandient = (text: string) =>
-	LOGGINGS_FORMATKITS[2](false, text);
+export const LggsGrandient = (text: string) =>
+	LGGS_FORMATKITS[2](false, text);
 
 /**
- * Default Loggings Formatkits
+ * Default Lggs Formatkits
  */
-export const LOGGINGS_FORMATKITS: LoggingsFormatKitFunction[] = [
+export const LGGS_FORMATKITS: LggsFormatKitFunction[] = [
 	/**
-	 * Loggings Legacy colors formatkit
+	 * Lggs Legacy colors formatkit
 	 *
 	 * @new Fragment/Fragment
 	 * @version 3.2.0v
-	 * @since Loggings v1.0.0
+	 * @since Lggs v1.0.0
 	 *
 	 * @example "[example text].green-b"
 	 */
@@ -135,10 +135,10 @@ export const LOGGINGS_FORMATKITS: LoggingsFormatKitFunction[] = [
 				if (isBold)
 					fragmented = nocolor
 						? fragmented
-						: LoggingsAnsiSpecials.bold + fragmented;
+						: LggsAnsiSpecials.bold + fragmented;
 				fragmented = nocolor ? fragmented : colorpik(key, fragmented);
 
-				const placeholder = `<__LOGGINGS_$${count}>`;
+				const placeholder = `<__LGGS_$${count}>`;
 				fragments.push({ key: placeholder, value: fragmented });
 				return placeholder;
 			});
@@ -153,11 +153,11 @@ export const LOGGINGS_FORMATKITS: LoggingsFormatKitFunction[] = [
 		return output;
 	},
 	/**
-	 * Loggings Combined Simple Styles
+	 * Lggs Combined Simple Styles
 	 * Bold, Strikethrough, Italic, Underline, Blink, Reverse
 	 * @version 3.2.0 optimized
 	 */
-	LoggingsFormatParser(
+	LggsFormatParser(
 		/(\*)(.*?)\*|(~)(.*?)~|(-)(.*?)-|(_)(.*?)_|(!)(.*?)!|(#)(.*?)#/g,
 		(nocolor, match, ...args) => {
 			// args contains captured groups.
@@ -199,16 +199,16 @@ export const LOGGINGS_FORMATKITS: LoggingsFormatKitFunction[] = [
 		},
 	),
 	/**
-	 * Loggings Gradient formatkit
+	 * Lggs Gradient formatkit
 	 *
 	 * @version 1.0.0v
-	 * @since Loggings v3.0.0
+	 * @since Lggs v3.0.0
 	 */
-	LoggingsFormatParser(/\(([^()]+)\)g[db]\((.*?)\)/g, GradientFunction),
+	LggsFormatParser(/\(([^()]+)\)g[db]\((.*?)\)/g, GradientFunction),
 ];
 
 /**
- * Sprintf implementation for Loggings
+ * Sprintf implementation for Lggs
  */
 export function sprintf(
 	format: string,
@@ -261,7 +261,7 @@ export function sprintf(
 }
 
 /**
- * Loggings FormatKit Controller
+ * Lggs FormatKit Controller
  *
  * Processes text by applying the defined FormatKits, allowing logs to be styled
  * with various formats such as colors, bold, underline, and gradients.
@@ -270,22 +270,22 @@ export function sprintf(
  * @param extraformats - Additional custom FormatKits.
  * @param nocolor - Determines whether formatting should be disabled (returning plain text).
  * @returns Returns a formatted string with applied styling rules.
- * @since Loggings v3.0.0
- * @new Fragment/Fragmenter of loggings
+ * @since Lggs v3.0.0
+ * @new Fragment/Fragmenter of lggs
  *
  * @example
  * ```ts
- * const formatted = LoggingsFormatKitController("Text in *bold* and ~strikethrough~");
+ * const formatted = LggsFormatKitController("Text in *bold* and ~strikethrough~");
  * console.log(formatted); // Output formatted with ANSI codes
  * ```
  */
-export const LoggingsFormatKitController = (
+export const LggsFormatKitController = (
 	texts: any | any[],
-	extraformats: LoggingsFormatKitFunction[] = [],
+	extraformats: LggsFormatKitFunction[] = [],
 	nocolor = false,
 ) => {
 	let inputs = Array.isArray(texts) ? texts : [texts];
-	const tools = [...LOGGINGS_FORMATKITS, ...extraformats];
+	const tools = [...LGGS_FORMATKITS, ...extraformats];
 	let output: string[] = [];
 
 	// Sprintf Support

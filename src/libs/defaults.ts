@@ -1,27 +1,27 @@
 import type {
-	LoggingsFormatKitFunction,
-	LoggingsLevel,
-	LoggingsPlugin,
+	LggsFormatKitFunction,
+	LggsLevel,
+	LggsPlugin,
 } from "../types";
-import { LOGGINGS_FORMATKITS } from "./formatkits";
+import { LGGS_FORMATKITS } from "./formatkits";
 
-export type LoggingsBaseConfig = {
-	level: LoggingsLevel;
+export type LggsBaseConfig = {
+	level: LggsLevel;
 	title: string;
-	formatKits: LoggingsFormatKitFunction[];
+	formatKits: LggsFormatKitFunction[];
 };
 
 const defaults = {
-	level: "info" as LoggingsLevel,
-	title: "Loggings",
-	formatKits: LOGGINGS_FORMATKITS,
-} satisfies LoggingsBaseConfig;
+	level: "info" as LggsLevel,
+	title: "Lggs",
+	formatKits: LGGS_FORMATKITS,
+} satisfies LggsBaseConfig;
 
 export default defaults;
 
-export type LoggingsConstructorConfig<
+export type LggsConstructorConfig<
 	Plugins extends
-		readonly LoggingsPlugin<any>[] = readonly LoggingsPlugin<any>[],
-> = Partial<LoggingsBaseConfig> & {
+		readonly LggsPlugin<any>[] = readonly LggsPlugin<any>[],
+> = Partial<LggsBaseConfig> & {
 	plugins?: Plugins;
 };

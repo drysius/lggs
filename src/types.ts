@@ -29,7 +29,7 @@ export type TimerFormat = {
  * - `error`: Error conditions that might be fatal.
  * - `txt`: Plain text output without specific level formatting.
  */
-export type LoggingsLevel =
+export type LggsLevel =
 	| "info"
 	| "debug"
 	| "warn"
@@ -45,7 +45,7 @@ export type LoggingsLevel =
  * @param input - The text to format.
  * @returns The formatted string.
  */
-export type LoggingsFormatKitFunction = (
+export type LggsFormatKitFunction = (
 	nocolor: boolean,
 	input: string,
 ) => string;
@@ -53,15 +53,15 @@ export type LoggingsFormatKitFunction = (
 /**
  * Any type of message that can be logged.
  */
-export type LoggingsMessage = any;
+export type LggsMessage = any;
 
 /**
- * Definition of a Loggings Plugin.
+ * Definition of a Lggs Plugin.
  * Contains metadata, lifecycle hooks, and default configuration.
  *
  * @template PluginConfig - The configuration object specific to this plugin.
  */
-export type LoggingsPluginData<PluginConfig extends object = {}> = {
+export type LggsPluginData<PluginConfig extends object = {}> = {
 	/** Unique identifier for the plugin. */
 	ident: string;
 	/** Default configuration values for the plugin. */
@@ -80,9 +80,9 @@ export type LoggingsPluginData<PluginConfig extends object = {}> = {
 	 */
 	onPreMessage?(
 		config: PluginConfig,
-		level: LoggingsLevel,
-		messages: LoggingsMessage[],
-	): LoggingsMessage[] | undefined;
+		level: LggsLevel,
+		messages: LggsMessage[],
+	): LggsMessage[] | undefined;
 	/**
 	 * Called to format the message. Returns the final string representation.
 	 * @param config - The current configuration.
@@ -92,8 +92,8 @@ export type LoggingsPluginData<PluginConfig extends object = {}> = {
 	 */
 	onMessage?(
 		config: PluginConfig,
-		level: LoggingsLevel,
-		messages: LoggingsMessage[],
+		level: LggsLevel,
+		messages: LggsMessage[],
 	): string;
 	/**
 	 * Called to output the message (e.g., to console, file, or network).
@@ -101,7 +101,7 @@ export type LoggingsPluginData<PluginConfig extends object = {}> = {
 	 * @param level - The log level.
 	 * @param message - The final formatted message string.
 	 */
-	onSend?(config: PluginConfig, level: LoggingsLevel, message: string): unknown;
+	onSend?(config: PluginConfig, level: LggsLevel, message: string): unknown;
 	/**
 	 * Called when an error occurs within the plugin lifecycle.
 	 * @param config - The current configuration.
@@ -113,9 +113,9 @@ export type LoggingsPluginData<PluginConfig extends object = {}> = {
 /**
  * A plugin can be either a plugin data object or a function returning one (factory pattern).
  */
-export type LoggingsPlugin<T extends object = {}> =
-	| LoggingsPluginData<T>
-	| (() => LoggingsPluginData<T>);
+export type LggsPlugin<T extends object = {}> =
+	| LggsPluginData<T>
+	| (() => LggsPluginData<T>);
 
 /**
  * Utility type to convert a union of types to an intersection.
@@ -132,8 +132,8 @@ export type UnwrapPlugin<P> = P extends (...args: any[]) => infer R ? R : P;
 
 /** Extracts the configuration type from a plugin. */
 export type PluginConfigOf<P> =
-	UnwrapPlugin<P> extends LoggingsPluginData<infer C extends object> ? C : {};
+	UnwrapPlugin<P> extends LggsPluginData<infer C extends object> ? C : {};
 
 /** Extracts and merges the configuration types of an array of plugins. */
-export type PluginsConfigOf<Ps extends readonly LoggingsPlugin<any>[]> =
+export type PluginsConfigOf<Ps extends readonly LggsPlugin<any>[]> =
 	UnionToIntersection<PluginConfigOf<Ps[number]>>;

@@ -1,11 +1,10 @@
-import Loggings, { ConsolePlugin, RegisterPlugin } from "./src/loggings";
+import Lggs, { ConsolePlugin, RegisterPlugin } from "./src/lggs";
 
-const logger = new Loggings({
-    
+const logger = new Lggs({
+    plugins:[]
 });
 
 const logger2 = logger.config({
-    
     plugins:[RegisterPlugin]
 })
 

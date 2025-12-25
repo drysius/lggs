@@ -1,8 +1,8 @@
 {
-    "entryPoints": ["./src/loggings.ts"],
+    "entryPoints": ["./src/lggs.ts"],
     "out": "./docs",
     "theme": "typedoc-rhineai-theme",
     "plugin": ["typedoc-rhineai-theme"],
-    "name": "Loggings Documentation",
+    "name": "Lggs Documentation",
     "readme": "./README.md"
 }

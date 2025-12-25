@@ -1,14 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { LoggingsLevel, LoggingsPluginData } from "../../types";
-import type { LoggingsBaseConfig } from "../defaults";
-import { LoggingsFormatKitController } from "../formatkits";
-import { LoggingsLevelToNumber, timer } from "../utils";
+import type { LggsLevel, LggsPluginData } from "../../types";
+import type { LggsBaseConfig } from "../defaults";
+import { LggsFormatKitController } from "../formatkits";
+import { LggsLevelToNumber, timer } from "../utils";
 
 /**
- * Loggings Register Default options
+ * Lggs Register Default options
  */
-export const RegisterPluginDefault: LoggingsRegisterConfig = {
+export const RegisterPluginDefault: LggsRegisterConfig = {
 	register: true,
 	register_del: true,
 	register_limit: 10,
@@ -19,25 +19,25 @@ export const RegisterPluginDefault: LoggingsRegisterConfig = {
 		"[ {day}/{month}/{year}-{hours}:{minutes}:{seconds} ] [ _.{title}._ ] {message}",
 };
 /**
- * Loggings Register plugin
+ * Lggs Register plugin
  *
- * Allow loggings show logs in terminal with colors
+ * Allow lggs show logs in terminal with colors
  *
  * @version 2.0.0
  */
 export const RegisterPlugin = (
-	opts: LoggingsRegisterOptions = {},
-): LoggingsPluginData<
-	LoggingsRegisterConfig & Partial<LoggingsBaseConfig>
+	opts: LggsRegisterOptions = {},
+): LggsPluginData<
+	LggsRegisterConfig & Partial<LggsBaseConfig>
 > => ({
-	ident: "loggings-register",
+	ident: "lggs-register",
 	default: RegisterPluginDefault,
 	onInit: opts.onInit,
 	onPreMessage: (config, level, messages) => {
-		const logLevel = LoggingsLevelToNumber(
-			config.register_level ?? (config.level as LoggingsLevel),
+		const logLevel = LggsLevelToNumber(
+			config.register_level ?? (config.level as LggsLevel),
 		);
-		const globalLevel = LoggingsLevelToNumber(config.level as LoggingsLevel);
+		const globalLevel = LggsLevelToNumber(config.level as LggsLevel);
 		if (!config.register || logLevel < globalLevel) return undefined;
 
 		return opts.onPreMessage
@@ -57,7 +57,7 @@ export const RegisterPlugin = (
 		if (message.includes("{message}")) {
 			message = message.replace(
 				/{message}/g,
-				LoggingsFormatKitController(messages, config.formatKits, true),
+				LggsFormatKitController(messages, config.formatKits, true),
 			);
 		}
 		return message;
@@ -103,14 +103,14 @@ export const RegisterPlugin = (
 	},
 });
 
-export type LoggingsRegisterOptions = {
-	onPreMessage?: LoggingsPluginData<LoggingsRegisterConfig>["onPreMessage"];
-	onMessage?: LoggingsPluginData<LoggingsRegisterConfig>["onMessage"];
-	onSend?: LoggingsPluginData<LoggingsRegisterConfig>["onSend"];
-	onInit?: LoggingsPluginData<LoggingsRegisterConfig>["onInit"];
+export type LggsRegisterOptions = {
+	onPreMessage?: LggsPluginData<LggsRegisterConfig>["onPreMessage"];
+	onMessage?: LggsPluginData<LggsRegisterConfig>["onMessage"];
+	onSend?: LggsPluginData<LggsRegisterConfig>["onSend"];
+	onInit?: LggsPluginData<LggsRegisterConfig>["onInit"];
 };
 
-export type LoggingsRegisterConfig = {
+export type LggsRegisterConfig = {
 	/**
 	 * Allows register logs in file, on {register_dir}
 	 */
@@ -121,10 +121,10 @@ export type LoggingsRegisterConfig = {
 	 */
 	register_del: boolean;
 	/**
-	 * Loggings Level
+	 * Lggs Level
 	 * Register-specific level will be used
 	 */
-	register_level?: LoggingsLevel;
+	register_level?: LggsLevel;
 	/**
 	 * Sets how many log files will be needed to start deleting old files,
 	 * if "register_del" is disabled or the value set is 0,
