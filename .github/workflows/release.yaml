@@ -1,4 +1,4 @@
-name: Publish Loggings package
+name: Publish Lggs package
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
       - name: Installing dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build Loggings
+      - name: Build Lggs
         run: bun run build
 
       - name: Remove unnecessary files 

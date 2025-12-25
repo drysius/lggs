@@ -68,6 +68,7 @@
     "build": "tsc --project tsconfig.test.json && bun run build.ts",
     "docs": "typedoc",
     "test": "bun test",
+    "llms": "bun run llms.ts",
     "check": "biome check --write",
     "prebuild": "tsc --project tsconfig.test.json"
   },

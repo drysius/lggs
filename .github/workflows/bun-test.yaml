@@ -1,4 +1,4 @@
-name: Testing Loggings in Bun
+name: Testing Lggs in Bun
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish:
-    name: Testing Loggings in Bun
+    name: Testing Lggs in Bun
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,5 +23,5 @@ jobs:
       - name: Installing dependencies
         run: bun install --frozen-lockfile
 
-      - name: Testing Loggings in Bun
+      - name: Testing Lggs in Bun
         run: bun test

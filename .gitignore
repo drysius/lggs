@@ -5,7 +5,7 @@ esm
 mjs
 docs
 browser
-loggings.d.ts
+llgs.d.ts
 browser.d.ts
 # output
 out
@@ -13,7 +13,7 @@ dist
 *.tgz
 logs
 bun.lockb
-
+llms.txt
 # code coverage
 coverage
 *.lcov

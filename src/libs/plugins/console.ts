@@ -74,10 +74,10 @@ export const ConsolePlugin = (
 				disabled
 					? level
 					: colorpik(
-							config.status[level],
-							colorpik("bold", level),
-							config.colors,
-						),
+						config.status[level],
+						colorpik("bold", level),
+						config.colors,
+					),
 			);
 		}
 		if (message.includes("{message}")) {
@@ -111,9 +111,7 @@ export const ConsolePlugin = (
 			}
 			case Runtime.Bun: {
 				//@ts-ignore Ignore Bun
-				return isError
-					? Bun.write(Bun.stderr, nmessage)
-					: Bun.write(Bun.stdout, nmessage);
+				return isError ? Bun.write(Bun.stderr, nmessage) : Bun.write(Bun.stdout, nmessage);
 			}
 			case Runtime.Browser: {
 				// Navegador usa console para logging
