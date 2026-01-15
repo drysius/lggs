@@ -3,6 +3,7 @@ import path from "node:path";
 import type { LggsLevel, LggsPluginData } from "../../types";
 import type { LggsBaseConfig } from "../defaults";
 import { LggsFormatKitController } from "../formatkits";
+import { getCallerInfo } from "../trace";
 import { LggsLevelToNumber, timer } from "../utils";
 
 /**
@@ -17,6 +18,7 @@ export const RegisterPluginDefault: LggsRegisterConfig = {
 	register_filename: "{day}_{month}_{year}.{ext}",
 	register_format:
 		"[ {day}/{month}/{year}-{hours}:{minutes}:{seconds} ] [ _.{title}._ ] {message}",
+	tracefile: false,
 };
 /**
  * Lggs Register plugin
@@ -53,6 +55,10 @@ export const RegisterPlugin = (
 		}
 		if (message.includes("{status}")) {
 			message = message.replace(/{status}/g, level);
+		}
+		if (config.tracefile && message.includes("{file}")) {
+			const caller = getCallerInfo();
+			message = message.replace(/{file}/g, `${caller.file}:${caller.line}`);
 		}
 		if (message.includes("{message}")) {
 			message = message.replace(
@@ -153,6 +159,10 @@ export type LggsRegisterConfig = {
 	 * @default "{day}_{month}_{year}.{ext}"
 	 */
 	register_filename: string;
+	/**
+	 * Enable trace file
+	 */
+	tracefile: boolean;
 	/**
 	 * Register Format, in registration logs,
 	 *

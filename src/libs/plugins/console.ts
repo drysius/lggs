@@ -2,6 +2,7 @@ import type { LggsLevel, LggsPluginData } from "../../types";
 import type { LggsBaseConfig } from "../defaults";
 import { LggsFormatKitController } from "../formatkits";
 import { colorpik, type LggsPallet } from "../pallet";
+import { getCallerInfo } from "../trace";
 import { LggsLevelToNumber, Runtime, runtime, timer } from "../utils";
 
 /**
@@ -21,6 +22,7 @@ export const ConsolePluginDefault: LggsConsoleConfig = {
 	fallback: "white",
 	disable_colors: false,
 	console: true,
+	tracefile: false,
 	colors: {},
 };
 
@@ -80,6 +82,14 @@ export const ConsolePlugin = (
 					),
 			);
 		}
+		if (config.tracefile && message.includes("{file}")) {
+			const caller = getCallerInfo();
+			const fileText = `${caller.file}:${caller.line}`;
+			message = message.replace(
+				/{file}/g,
+				disabled ? fileText : colorpik("gray", fileText, config.colors),
+			);
+		}
 		if (message.includes("{message}")) {
 			message = message.replace(
 				/{message}/g,
@@ -105,9 +115,7 @@ export const ConsolePlugin = (
 			}
 			case Runtime.Node: {
 				//@ts-ignore Ignore Node
-				return isError
-					? process.stderr.write(nmessage)
-					: process.stdout.write(nmessage);
+				return isError ? process.stderr.write(nmessage) : process.stdout.write(nmessage);
 			}
 			case Runtime.Bun: {
 				//@ts-ignore Ignore Bun
@@ -191,6 +199,11 @@ export type LggsConsoleConfig = {
 	 * Allows show logs in terminal
 	 */
 	console: boolean;
+	/**
+	 * Enable trace file
+	 * Show filepath of console.log, used for debugging.
+	 */
+	tracefile: boolean;
 	/**
 	 * Color of title
 	 */

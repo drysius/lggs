@@ -16,8 +16,8 @@ export const LggsFormatParser = (
 	parser: string | RegExp,
 	cb: (nocolor: boolean, ...text: string[]) => string,
 ): LggsFormatKitFunction => {
+	const regex = typeof parser === "string" ? new RegExp(parser, "g") : parser;
 	return (nocolor, text) => {
-		const regex = typeof parser === "string" ? new RegExp(parser, "g") : parser;
 		return text.replace(regex, (...args) => cb(nocolor, ...args));
 	};
 };
@@ -311,7 +311,7 @@ export const LggsFormatKitController = (
 	output = output.map((current) => {
 		let changed = false;
 		let iterations = 0;
-		const max = 10;
+		const max = 5;
 
 		do {
 			changed = false;
