@@ -2,7 +2,7 @@
   "name": "llgs",
   "type": "module",
   "description": "Simple log system for your node js application, supported colors.",
-  "version": "1.0.0",
+  "version": "3.2.0",
   "main": "cjs/lggs.cjs",
   "module": "mjs/lggs.js",
   "types": "lggs.d.ts",
