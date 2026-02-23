@@ -63,7 +63,12 @@ export const RegisterPlugin = (
 		if (message.includes("{message}")) {
 			message = message.replace(
 				/{message}/g,
-				LggsFormatKitController(messages, config.formatKits, true),
+				LggsFormatKitController(
+					messages,
+					config.formatKits,
+					true,
+					Boolean(config.extkits),
+				),
 			);
 		}
 		return message;

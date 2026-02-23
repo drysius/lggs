@@ -8,12 +8,14 @@ import { LGGS_FORMATKITS } from "./formatkits";
 export type LggsBaseConfig = {
 	level: LggsLevel;
 	title: string;
+	extkits: boolean;
 	formatKits: LggsFormatKitFunction[];
 };
 
 const defaults = {
 	level: "info" as LggsLevel,
 	title: "Lggs",
+	extkits: false,
 	formatKits: LGGS_FORMATKITS,
 } satisfies LggsBaseConfig;
 

@@ -22,15 +22,78 @@ export const LggsFormatParser = (
 	};
 };
 
-/**
- * Optimized Gradient Function
- */
-const GradientFunction = (
+const legacyPattern = /\[([^[\]]+)\]\.(\w+)(-b)?/g;
+const stylePattern =
+	/(\*)(.*?)\*|(~)(.*?)~|(-)(.*?)-|(_)(.*?)_|(!)(.*?)!|(#)(.*?)#/g;
+const gradientPattern = /\(([^()]+)\)g[db]\((.*?)\)/g;
+
+const styleMap: Record<string, string> = {
+	"*": "bold",
+	"~": "strikethrough",
+	"-": "italic",
+	_: "underline",
+	"!": "blink",
+	"#": "reverse",
+};
+
+function legacyFormatKit(nocolor: boolean, input: string): string {
+	let output = input;
+	const fragments: { key: string; value: string }[] = [];
+	let counter = 0;
+
+	while (true) {
+		legacyPattern.lastIndex = 0;
+		let changed = false;
+		output = output.replace(legacyPattern, (_matched, value, key, boldFlag) => {
+			changed = true;
+			let formatted = value;
+			if (!nocolor && boldFlag === "-b") {
+				formatted = LggsAnsiSpecials.bold + formatted;
+			}
+			if (!nocolor) {
+				formatted = colorpik(key, formatted);
+			}
+			const placeholder = `<__LGGS_${counter++}>`;
+			fragments.push({ key: placeholder, value: formatted });
+			return placeholder;
+		});
+		if (!changed) break;
+	}
+
+	for (let i = fragments.length - 1; i >= 0; i--) {
+		output = output.replace(fragments[i].key, fragments[i].value);
+	}
+
+	return output;
+}
+
+function styleFormatKit(nocolor: boolean, input: string): string {
+	return input.replace(stylePattern, (match, ...groups) => {
+		if (nocolor) {
+			for (let i = 1; i < groups.length; i += 2) {
+				if (groups[i] !== undefined) return groups[i];
+			}
+			return match;
+		}
+
+		for (let i = 0; i < groups.length; i += 2) {
+			const delimiter = groups[i];
+			const content = groups[i + 1];
+			if (delimiter && content !== undefined) {
+				return colorpik(styleMap[delimiter], content);
+			}
+		}
+
+		return match;
+	});
+}
+
+function gradientFormatKit(
 	nocolor: boolean,
 	_: string,
 	text: string,
 	_colors: string,
-) => {
+) {
 	if (nocolor) return text;
 
 	const splited_colors = _colors.split(",");
@@ -89,7 +152,7 @@ const GradientFunction = (
 
 	output.push(LggsAnsiSpecials.reset);
 	return output.join("");
-};
+}
 
 /**
  * Returns Gradient Text in terminal colors
@@ -97,115 +160,22 @@ const GradientFunction = (
  * @since Lggs v3.0.0
  */
 export const LggsGrandient = (text: string) =>
-	LGGS_FORMATKITS[2](false, text);
+	LGGS_FORMATKITS[1](false, text);
 
 /**
- * Default Lggs Formatkits
+ * Core Lggs Formatkits
+ * Legacy + gradient ficam sempre ativos.
  */
 export const LGGS_FORMATKITS: LggsFormatKitFunction[] = [
-	/**
-	 * Lggs Legacy colors formatkit
-	 *
-	 * @new Fragment/Fragment
-	 * @version 3.2.0v
-	 * @since Lggs v1.0.0
-	 *
-	 * @example "[example text].green-b"
-	 */
-	(nocolor, input) => {
-		const pattern = /\[([^[\]]+)\]\.(\w+)(-b)?/g;
-		const fragments: {
-			key: string;
-			value: string;
-		}[] = [];
-		let counter = 0;
-
-		let output = input;
-
-		// Multi-pass replacement: Process all innermost matches at once
-		while (true) {
-			let changed = false;
-			// Use replace with callback to handle all non-overlapping matches in one pass
-			output = output.replace(pattern, (_matched, value, key, boldFlag) => {
-				changed = true;
-				const isBold = boldFlag === "-b";
-				const count = counter++;
-
-				let fragmented = value;
-				if (isBold)
-					fragmented = nocolor
-						? fragmented
-						: LggsAnsiSpecials.bold + fragmented;
-				fragmented = nocolor ? fragmented : colorpik(key, fragmented);
-
-				const placeholder = `<__LGGS_$${count}>`;
-				fragments.push({ key: placeholder, value: fragmented });
-				return placeholder;
-			});
-
-			if (!changed) break;
-		}
-
-		for (let i = fragments.length - 1; i >= 0; i--) {
-			output = output.replace(fragments[i].key, fragments[i].value);
-		}
-
-		return output;
-	},
-	/**
-	 * Lggs Combined Simple Styles
-	 * Bold, Strikethrough, Italic, Underline, Blink, Reverse
-	 * @version 3.2.0 optimized
-	 */
-	LggsFormatParser(
-		/(\*)(.*?)\*|(~)(.*?)~|(-)(.*?)-|(_)(.*?)_|(!)(.*?)!|(#)(.*?)#/g,
-		(nocolor, match, ...args) => {
-			// args contains captured groups.
-			// Groups:
-			// 1: * (bold delimiter), 2: content
-			// 3: ~ (strike delimiter), 4: content
-			// 5: - (italic delimiter), 6: content
-			// 7: _ (underline delimiter), 8: content
-			// 9: ! (blink delimiter), 10: content
-			// 11: # (reverse delimiter), 12: content
-
-			if (nocolor) {
-				// Return content only
-				// Find the non-undefined content group
-				for (let i = 1; i < args.length; i += 2) {
-					if (args[i] !== undefined) return args[i];
-				}
-				return match;
-			}
-
-			const styleMap: Record<string, string> = {
-				"*": "bold",
-				"~": "strikethrough",
-				"-": "italic",
-				_: "underline",
-				"!": "blink",
-				"#": "reverse",
-			};
-
-			// Find matched delimiter
-			for (let i = 0; i < args.length; i += 2) {
-				const delimiter = args[i];
-				const content = args[i + 1];
-				if (delimiter && content !== undefined) {
-					return colorpik(styleMap[delimiter], content);
-				}
-			}
-			return match;
-		},
-	),
-	/**
-	 * Lggs Gradient formatkit
-	 *
-	 * @version 1.0.0v
-	 * @since Lggs v3.0.0
-	 */
-	LggsFormatParser(/\(([^()]+)\)g[db]\((.*?)\)/g, GradientFunction),
+	legacyFormatKit,
+	LggsFormatParser(gradientPattern, gradientFormatKit),
 ];
+
+/**
+ * Formatkits extras (desligados por padrão).
+ * Ative com `extkits: true`.
+ */
+export const LGGS_EXT_FORMATKITS: LggsFormatKitFunction[] = [styleFormatKit];
 
 /**
  * Sprintf implementation for Lggs
@@ -283,50 +253,36 @@ export const LggsFormatKitController = (
 	texts: any | any[],
 	extraformats: LggsFormatKitFunction[] = [],
 	nocolor = false,
+	extkits = false,
 ) => {
 	let inputs = Array.isArray(texts) ? texts : [texts];
-	const tools = [...LGGS_FORMATKITS, ...extraformats];
-	let output: string[] = [];
+	const output: string[] = [];
 
-	// Sprintf Support
 	if (inputs.length > 0 && typeof inputs[0] === "string" && inputs.length > 1) {
-		// Simple heuristic: if string contains %, try sprintf
-		// Or always try? Node.js util.format always tries.
 		const { result, consumed } = sprintf(inputs[0], inputs.slice(1), nocolor);
 		output.push(result);
-		// Remove consumed args + format string
 		inputs = inputs.slice(1 + consumed);
 	}
 
-	// Process remaining inputs
-	inputs.forEach((input: any) => {
+	for (const input of inputs) {
 		if (typeof input === "string") {
 			output.push(input);
 		} else {
 			output.push(_inspect(input, nocolor));
 		}
-	});
+	}
 
-	// Apply FormatKits to all string parts
-	output = output.map((current) => {
-		let changed = false;
-		let iterations = 0;
-		const max = 5;
+	const tools = extkits
+		? [...LGGS_FORMATKITS, ...LGGS_EXT_FORMATKITS, ...extraformats]
+		: [...LGGS_FORMATKITS, ...extraformats];
 
-		do {
-			changed = false;
-			tools.forEach((func) => {
-				const nextupt = func(nocolor, current);
-				if (nextupt !== current) {
-					changed = true;
-					current = nextupt;
-				}
-			});
-			iterations++;
-		} while (changed && iterations < max);
-
-		return current;
-	});
+	for (let i = 0; i < output.length; i++) {
+		let current = output[i];
+		for (const tool of tools) {
+			current = tool(nocolor, current);
+		}
+		output[i] = current;
+	}
 
 	return output.join(" ");
 };

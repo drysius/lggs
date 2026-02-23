@@ -96,21 +96,38 @@ export function deepMerge<T extends object = object>(
 	target: T,
 	...sources: Partial<T>[]
 ): T {
-	if (!sources.length) return target;
-	const source = sources.shift();
+	for (const source of sources) {
+		if (!isObject(source)) continue;
 
-	if (isObject(target) && isObject(source)) {
-		for (const key in source) {
-			if (isObject(source[key])) {
-				if (!target[key]) Object.assign(target, { [key]: {} });
-				deepMerge(target[key] as object, source[key] as object);
-			} else {
-				Object.assign(target, { [key]: source[key] });
+		const stack: Array<{ to: Record<string, any>; from: Record<string, any> }> = [
+			{ to: target as Record<string, any>, from: source as Record<string, any> },
+		];
+
+		while (stack.length > 0) {
+			const current = stack.pop() as {
+				to: Record<string, any>;
+				from: Record<string, any>;
+			};
+
+			for (const key in current.from) {
+				const next = current.from[key];
+				if (isObject(next)) {
+					const existing = current.to[key];
+					if (!isObject(existing)) {
+						current.to[key] = {};
+					}
+					stack.push({
+						to: current.to[key] as Record<string, any>,
+						from: next as Record<string, any>,
+					});
+					continue;
+				}
+				current.to[key] = next;
 			}
 		}
 	}
 
-	return deepMerge(target, ...sources);
+	return target;
 }
 
 function isObject(item: any): item is object {

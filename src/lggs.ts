@@ -26,234 +26,200 @@ import type {
 	PluginsConfigOf,
 } from "./types";
 
-/**
- * Initialization options for the Lggs class.
- * Allows partial configuration of base settings and plugin-specific settings.
- *
- * @template Extra - Additional custom configuration properties.
- * @template Ps - List of plugins to initialize with.
- */
 export type LggsInitOptions<
 	Extra extends object,
 	Ps extends readonly LggsPlugin<any>[] = readonly LggsPlugin<any>[],
 > = Partial<Extra & PluginsConfigOf<Ps>> & {
-	/**
-	 * Optional array of plugins to be used by the instance.
-	 */
 	plugins?: Ps;
 };
 
-/**
- * Default plugins used in the logging system if none are specified.
- */
 export const LggsDefaultPlugins = [ConsolePlugin, RegisterPlugin] as const;
 
 declare const global: typeof globalThis & {
-	/**
-	 * Internal global storage for the lggs instance when overriding the global console.
-	 */
 	__INTERNAL_LGGS_INSTANCE__: InstanceType<typeof Lggs>;
 };
 
-/**
- * Lggs Class
- *
- * A high-performance, structured logging system that extends the native Console.
- * Supports a flexible plugin system, gradients, custom formatting kits, and deep configuration merging.
- *
- * @template Config - The configuration object type for this instance.
- * @template Ps - The tuple of plugins used by this instance.
- */
+type Cache<T> = { stamp: string; value: T } | null;
+
 export class Lggs<
 	const in out Config extends LggsBaseConfig = typeof defaults,
 	const in out Ps extends
 		readonly LggsPlugin<any>[] = typeof LggsDefaultPlugins,
 > extends Console {
-	/**
-	 * Global logging configuration.
-	 * Changes here affect all instances that do not override specific properties.
-	 */
 	public static configs: Record<string, any> = defaults;
-
-	/**
-	 * Instance-specific logging configuration overrides.
-	 * These properties take precedence over global configurations.
-	 */
 	public configs: Partial<Config & LggsBaseConfig & PluginsConfigOf<Ps>>;
 
-	/**
-	 * Default plugins applied globally to every new instance.
-	 */
 	public static plugins: LggsPlugin<any>[] = [...LggsDefaultPlugins];
-
-	/**
-	 * Instance-specific plugins.
-	 * Includes both global defaults and instance-added plugins.
-	 */
 	public plugins: LggsPlugin<any>[] = [...LggsDefaultPlugins];
 
-	/**
-	 * Get all instance configurations including plugin configurations.
-	 * Merges: Global Defaults -> Plugin Defaults -> Instance Overrides.
-	 *
-	 * @returns The fully merged configuration object.
-	 */
+	private static globalVersion = 0;
+	private static globalCache: Cache<Record<string, any>> = null;
+
+	private localConfigVersion = 0;
+	private localPluginVersion = 0;
+	private pluginCache: Cache<LggsPluginData<any>[]> = null;
+	private configCache: Cache<Config & LggsBaseConfig & PluginsConfigOf<Ps>> = null;
+
+	private static normalizePlugins<Plugins extends readonly LggsPlugin<any>[]>(
+		instancePlugins: Plugins,
+		nostatic = false,
+	): LggsPluginData<any>[] {
+		const map = new Map<string, LggsPluginData<any>>();
+
+		if (!nostatic) {
+			for (const raw of Lggs.plugins) {
+				const plugin = typeof raw === "function" ? raw() : raw;
+				map.set(plugin.ident, plugin);
+			}
+		}
+
+		for (const raw of instancePlugins) {
+			const plugin = typeof raw === "function" ? raw() : raw;
+			map.set(plugin.ident, plugin);
+		}
+
+		return Array.from(map.values());
+	}
+
+	private static bumpGlobalVersion() {
+		Lggs.globalVersion++;
+		Lggs.globalCache = null;
+	}
+
+	private bumpConfigVersion() {
+		this.localConfigVersion++;
+		this.configCache = null;
+	}
+
+	private bumpPluginVersion() {
+		this.localPluginVersion++;
+		this.pluginCache = null;
+		this.configCache = null;
+	}
+
+	private getResolvedPlugins() {
+		const stamp = `${Lggs.globalVersion}:${this.localPluginVersion}`;
+		if (this.pluginCache?.stamp === stamp) {
+			return this.pluginCache.value;
+		}
+
+		const value = Lggs.normalizePlugins(this.plugins as any);
+		this.pluginCache = { stamp, value };
+		return value;
+	}
+
+	private runInitHooks(plugins: LggsPluginData<any>[]) {
+		const config = this.allconfigs;
+		for (const plugin of plugins) {
+			if (plugin.onInit) plugin.onInit(config as any);
+		}
+	}
+
 	public get allconfigs(): Config & LggsBaseConfig & PluginsConfigOf<Ps> {
-		const pluginDefaults = Lggs.pluginLoader(this.plugins).map(
-			(a) => a.default,
-		);
-		return deepMerge(
+		const stamp = `${Lggs.globalVersion}:${this.localConfigVersion}:${this.localPluginVersion}`;
+		if (this.configCache?.stamp === stamp) {
+			return this.configCache.value;
+		}
+
+		const pluginDefaults = this.getResolvedPlugins().map((a) => a.default);
+		const value = deepMerge(
 			{} as Record<string, any>,
 			Lggs.configs,
 			...pluginDefaults,
 			this.configs,
 		) as Config & LggsBaseConfig & PluginsConfigOf<Ps>;
+		this.configCache = { stamp, value };
+		return value;
 	}
 
-	/**
-	 * Get all global configurations including global plugin defaults.
-	 *
-	 * @returns The fully merged global configuration object.
-	 */
 	public static get allconfigs() {
-		const pluginDefaults = Lggs.pluginLoader(Lggs.plugins).map(
+		const stamp = String(Lggs.globalVersion);
+		if (Lggs.globalCache?.stamp === stamp) {
+			return Lggs.globalCache.value;
+		}
+
+		const pluginDefaults = Lggs.normalizePlugins(Lggs.plugins as any).map(
 			(a) => a.default,
 		);
-		return deepMerge({}, Lggs.configs, ...pluginDefaults);
+		const value = deepMerge({}, Lggs.configs, ...pluginDefaults);
+		Lggs.globalCache = { stamp, value };
+		return value;
 	}
 
-	/**
-	 * Constructor using an options object.
-	 *
-	 * @param config - The initialization options including base config and plugins.
-	 */
 	constructor(config?: LggsInitOptions<Config, Ps>);
-	/**
-	 * Constructor using legacy title and color parameters.
-	 *
-	 * @param title - The title of the logger instance.
-	 * @param color - The color key for the title (from LggsPallet).
-	 * @param advanced - Additional advanced configurations.
-	 */
 	constructor(
 		title: string,
 		color?: keyof typeof LggsPallet,
 		advanced?: LggsInitOptions<Config, Ps>,
 	);
-	/**
-	 * Internal constructor implementation supporting both object-based and positional arguments.
-	 */
 	constructor(
 		opts?: LggsInitOptions<Config, Ps> | string,
 		color: keyof typeof LggsPallet = "blue",
 		advanced: LggsInitOptions<Config, Ps> = {},
 	) {
 		super(process.stdout, process.stderr);
-		const IsOpt = typeof opts === "object" && opts !== null;
 
+		const isOptionsObject = typeof opts === "object" && opts !== null;
 		const plugins =
-			(IsOpt ? ((opts as any)?.plugins ?? []) : []) ||
+			(isOptionsObject ? ((opts as any)?.plugins ?? []) : []) ||
 			(advanced as any)?.plugins ||
 			[];
+
 		if (plugins.length > 0) {
-			//override plugins
-			this.plugins = plugins;
+			this.plugins = [...plugins];
+			this.bumpPluginVersion();
 		}
 
-		const initialConfig = {
+		this.configs = {
 			color,
 			...advanced,
 			...(typeof opts === "string" ? { title: opts } : opts),
-		};
+		} as Partial<Config & LggsBaseConfig & PluginsConfigOf<Ps>>;
 
-		this.configs = initialConfig as Partial<
-			Config & LggsBaseConfig & PluginsConfigOf<Ps>
-		>;
-
-		Lggs.pluginLoader(this.plugins).forEach((plugin) => {
-			if (plugin.onInit) plugin.onInit(this.allconfigs as any);
-		});
+		this.runInitHooks(this.getResolvedPlugins());
 	}
 
-	/**
-	 * Loads and normalizes plugins (handling both objects and generator functions).
-	 * Automatically merges global static plugins unless `nostatic` is set to true.
-	 *
-	 * @param instance_plugins - Plugins specific to the instance.
-	 * @param nostatic - If true, ignores globally registered plugins.
-	 * @returns An array of normalized plugin data objects.
-	 */
 	public static pluginLoader<Plugins extends readonly LggsPlugin<any>[]>(
 		instance_plugins: Plugins,
 		nostatic = false,
 	): LggsPluginData<any>[] {
-		const plugins: Record<string, LggsPluginData<any>> = {};
-
-		if (!nostatic) {
-			Lggs.plugins.forEach((p) => {
-				const plugin = typeof p === "function" ? p() : p;
-				plugins[plugin.ident] = plugin;
-			});
-		}
-
-		instance_plugins.forEach((p) => {
-			const plugin = typeof p === "function" ? p() : p;
-			plugins[plugin.ident] = plugin;
-		});
-
-		return Object.values(plugins);
+		return Lggs.normalizePlugins(instance_plugins, nostatic);
 	}
 
-	/**
-	 * Adds a plugin to this specific logger instance.
-	 * This method accumulates type information for the configuration.
-	 *
-	 * @template P - The plugin type.
-	 * @param plugin - The plugin instance or function.
-	 * @param config - Optional initial configuration for this plugin.
-	 * @returns The logger instance with updated type information.
-	 */
 	public plugin<P extends LggsPlugin<any>>(
 		plugin: P,
 		config?: Partial<PluginConfigOf<P>>,
 	): Lggs<Config & PluginConfigOf<P>, readonly [...Ps, P]> {
 		this.plugins.push(plugin);
+		this.bumpPluginVersion();
 
-		if (config) this.configs = deepMerge(this.configs, config);
+		if (config) {
+			this.configs = deepMerge(this.configs, config);
+			this.bumpConfigVersion();
+		}
 
 		const pluginData = (
 			typeof plugin === "object" ? plugin : plugin()
 		) as LggsPluginData<any>;
-		if (pluginData.onInit) pluginData.onInit(this.allconfigs as any);
+		if (pluginData.onInit) {
+			pluginData.onInit(this.allconfigs as any);
+		}
 
 		return this as any;
 	}
 
-	/**
-	 * Adds a plugin globally to all future logger instances.
-	 *
-	 * @template T - The plugin configuration type.
-	 * @param plugin - The plugin to register.
-	 * @param config - Optional global default configuration for this plugin.
-	 * @returns The Lggs class for chaining.
-	 */
 	public static plugin<T extends object>(
 		plugin: LggsPlugin<T>,
 		config?: T,
 	): typeof Lggs {
 		Lggs.plugins.push(plugin);
-		if (config) Lggs.configs = deepMerge(Lggs.configs, config);
+		if (config) {
+			Lggs.configs = deepMerge(Lggs.configs, config);
+		}
+		Lggs.bumpGlobalVersion();
 		return Lggs;
 	}
 
-	/**
-	 * Updates the configuration of this logger instance.
-	 *
-	 * @template EConfig - Additional configuration types to merge.
-	 * @template EPs - Additional plugins to add via config.
-	 * @param advanced - The new configuration options.
-	 * @returns The updated logger instance.
-	 */
 	public config<
 		const EConfig extends LggsBaseConfig = typeof defaults,
 		const EPs extends readonly LggsPlugin<any>[] = Ps,
@@ -261,48 +227,39 @@ export class Lggs<
 		advanced: LggsInitOptions<EConfig, EPs> & Partial<PluginsConfigOf<Ps>>,
 	): Lggs<EConfig & Config, readonly [...EPs, ...Ps]> {
 		this.configs = deepMerge(this.configs, advanced as any);
+		this.bumpConfigVersion();
 
 		if (advanced.plugins) {
-			Lggs.pluginLoader(advanced.plugins, true).forEach((plugin) => {
-				if (plugin.onInit) plugin.onInit(this.allconfigs as any);
-			});
+			const normalized = Lggs.normalizePlugins(advanced.plugins, true);
+			const fullConfig = this.allconfigs;
+			for (const plugin of normalized) {
+				if (plugin.onInit) plugin.onInit(fullConfig as any);
+			}
 			this.plugins.push(...advanced.plugins);
+			this.bumpPluginVersion();
 		}
 
 		return this as never;
 	}
 
-	/**
-	 * Updates the global logging configuration.
-	 *
-	 * @template EConfig - Global configuration type extension.
-	 * @template EPs - Global plugin extension.
-	 * @param advanced - The global configuration options to apply.
-	 * @returns The Lggs class for chaining.
-	 */
 	public static config<
 		const EConfig extends LggsBaseConfig = typeof defaults,
 		const EPs extends
 			readonly LggsPlugin<any>[] = typeof LggsDefaultPlugins,
 	>(advanced: LggsInitOptions<EConfig, EPs>) {
 		Lggs.configs = deepMerge(Lggs.configs, advanced);
-
 		if (advanced?.plugins) {
-			Lggs.pluginLoader(advanced.plugins, false).forEach((plugin) => {
-				if (plugin.onInit) plugin.onInit(Lggs.allconfigs as any);
-			});
+			const normalized = Lggs.normalizePlugins(advanced.plugins, false);
+			const fullConfig = Lggs.allconfigs;
+			for (const plugin of normalized) {
+				if (plugin.onInit) plugin.onInit(fullConfig as any);
+			}
 			Lggs.plugins.push(...advanced.plugins);
 		}
-
+		Lggs.bumpGlobalVersion();
 		return Lggs;
 	}
 
-	/**
-	 * Overrides the global `console` with this specific logger instance.
-	 * Allows native `console.log`, `console.error`, etc., to use Lggs' formatting and plugins.
-	 *
-	 * @param logger - The Lggs instance to use as the global console.
-	 */
 	public static useConsole(logger: InstanceType<typeof Lggs>) {
 		global.__INTERNAL_LGGS_INSTANCE__ = logger;
 		global.console = {
@@ -322,63 +279,49 @@ export class Lggs<
 		};
 	}
 
-	/**
-	 * Internal controller that coordinates message processing through all registered plugins.
-	 * Executes lifecycle hooks: onPreMessage -> onMessage -> onSend.
-	 *
-	 * @param msgs - The raw messages to log.
-	 * @param level - The log level (info, error, debug, etc.).
-	 */
 	public controller(msgs: LggsMessage[], level: LggsLevel) {
 		const fullConfig = this.allconfigs;
+		const plugins = this.getResolvedPlugins();
 
-		Lggs.pluginLoader(this.plugins).forEach((plugin) => {
+		for (const plugin of plugins) {
 			try {
 				const messages = plugin.onPreMessage
 					? plugin.onPreMessage(fullConfig as any, level, msgs)
 					: msgs;
-				if (messages && plugin.onMessage) {
-					const message = plugin.onMessage(fullConfig as any, level, messages);
-					if (plugin.onSend) plugin.onSend(fullConfig as any, level, message);
-				}
+				if (!messages || !plugin.onMessage) continue;
+				const message = plugin.onMessage(fullConfig as any, level, messages);
+				if (plugin.onSend) plugin.onSend(fullConfig as any, level, message);
 			} catch (e) {
 				if (plugin.onError) plugin.onError(fullConfig as any, e as Error);
 				else throw e;
 			}
-		});
+		}
 	}
 
-	/** Log message with INFO level */
 	public log(...messages: LggsMessage[]) {
 		this.controller(messages, "info");
 		return this;
 	}
-	/** Log message with DEBUG level */
 	public debug(...messages: LggsMessage[]) {
 		this.controller(messages, "debug");
 		return this;
 	}
-	/** Log message with ERROR level */
 	public error(...messages: LggsMessage[]) {
 		this.controller(messages, "error");
 		return this;
 	}
-	/** Log message with TRACE level */
 	public trace(...messages: LggsMessage[]) {
 		this.controller(messages, "trace");
 		return this;
 	}
-	/** Log message with INFO level (alias) */
 	public info(...messages: LggsMessage[]) {
 		this.controller(messages, "info");
 		return this;
 	}
-	/** Log message with WARN level */
 	public warn(...messages: LggsMessage[]) {
 		this.controller(messages, "warn");
 		return this;
 	}
-	/** Log raw text message without status formatting */
 	public txt(...messages: LggsMessage[]) {
 		this.controller(messages, "txt");
 		return this;

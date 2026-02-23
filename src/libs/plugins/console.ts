@@ -58,6 +58,7 @@ export const ConsolePlugin = (
 			config.format,
 			config.formatKits,
 			config.disable_colors,
+			Boolean(config.extkits),
 		);
 		message = timer(message).format;
 
@@ -97,6 +98,7 @@ export const ConsolePlugin = (
 					messages,
 					config.formatKits,
 					config.disable_colors,
+					Boolean(config.extkits),
 				),
 			);
 		}

@@ -40,16 +40,22 @@ describe("Lggs FormatKits", () => {
             expect(result).toContain("\x1b[0m"); // Reset
         });
 
-        it("should parse bold syntax *bold*", () => {
+        it("should keep extkits disabled by default", () => {
             const text = "*Bold Text*";
             const result = LggsFormatKitController(text);
+            expect(result).toBe("*Bold Text*");
+        });
+
+        it("should parse bold syntax *bold*", () => {
+            const text = "*Bold Text*";
+            const result = LggsFormatKitController(text, [], false, true);
             expect(result).toContain("\x1b[1m");
             expect(result).toContain("Bold Text");
         });
 
         it("should parse strikethrough ~text~", () => {
             const text = "~Strike~";
-            const result = LggsFormatKitController(text);
+            const result = LggsFormatKitController(text, [], false, true);
             expect(result).toContain("\x1b[9m");
             expect(result).toContain("Strike");
         });
@@ -73,7 +79,7 @@ describe("Lggs FormatKits", () => {
         
         it("should strip colors when nocolor is true", () => {
             const text = "[Red].red *Bold*";
-            const result = LggsFormatKitController(text, [], true);
+            const result = LggsFormatKitController(text, [], true, true);
             expect(result).toBe("Red Bold");
             expect(result).not.toContain("\x1b[");
         });
